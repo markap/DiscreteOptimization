@@ -1,2 +1,2 @@
-DiscreteOptimization
-====================
+Discrete Optimization
+=====================

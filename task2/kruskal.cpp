@@ -17,7 +17,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 2
+#define WAIT 0.5
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -39,21 +39,14 @@ using leda::edge_array;
 using leda::pq_item;
 using leda::node_partition;
 
-void kruskal(graph &g, GraphWin &gw) {
+void kruskal(graph &g, GraphWin &gw, int &weight_sum) {
 
     p_queue<int, edge> prio_queue;
 
     node_partition partition = node_partition(g);
 
-    list<node> all_nodes; 
+    int counter = 0;
     
-    node n;
-    forall (n, g.all_nodes()) {
-       all_nodes.append(n); 
-    }
-
-
-
 
     edge_array<int> edge_weight(g);
 
@@ -80,8 +73,13 @@ void kruskal(graph &g, GraphWin &gw) {
 
 
         gw.set_color(working_edge, red);
-        gw.set_color(source_node, red);
-        gw.set_color(target_node, red);
+        // mark nodes only red if not already blue
+        if (gw.get_color(source_node) != blue) {
+            gw.set_color(source_node, red);
+        }
+        if (gw.get_color(target_node) != blue) {
+            gw.set_color(target_node, red);
+        }
 
         control_wait(WAIT);
 
@@ -89,19 +87,29 @@ void kruskal(graph &g, GraphWin &gw) {
             partition.union_blocks(source_node, target_node);
 
             gw.set_color(working_edge, blue);
-            gw.set_color(source_node, blue);
-            gw.set_color(target_node, blue);
+            weight_sum += edge_weight[working_edge];
 
-            all_nodes.remove(target_node); 
-            all_nodes.remove(source_node); 
+            // mark nodes only if not already marked
+            if (gw.get_color(target_node) != blue) {
+                gw.set_user_label(target_node, string("%d", counter++));
+                gw.set_color(target_node, blue);
+            }
+
+            if (gw.get_color(source_node) != blue) {
+                gw.set_user_label(source_node, string("%d", counter++));
+                gw.set_color(source_node, blue);
+            }
+
         } else {
 
             gw.set_color(working_edge, green);
 
         }
 
-        p(edge_weight[working_edge]);
-    } while (!all_nodes.empty());
+        p("number of block");
+        p(partition.number_of_blocks());
+
+    } while (counter < g.all_nodes().length() || partition.number_of_blocks() != 1);
 }
 
 
@@ -143,10 +151,12 @@ int main(int argc, char *argv[]) {
     forall_edges(e, g)
         gw.set_color(e, yellow);
 
-    gw.acknowledge("Ready!"); // Dialogbox anzeigen und bestätigen lassen
-    kruskal(g, gw);
+    gw.acknowledge("Start ?"); // Dialogbox anzeigen und bestätigen lassen
 
-    gw.acknowledge("Ready!"); // Dialogbox anzeigen und bestätigen lassen
+    int weight_sum  = 0;
+    kruskal(g, gw, weight_sum);
+
+    gw.acknowledge(string("Weight is %d !", weight_sum)); // Dialogbox anzeigen und bestätigen lassen
     gw.edit(); // nochmal in den Edit-Modus, zum Anschauen :)
 
     // Aufräumen und Ende

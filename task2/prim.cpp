@@ -57,7 +57,7 @@
         edge_array<int> edge_weight(g);
 
         edge e;
-        forall_edges(e, g) {
+        forall_edges(e, g) { // not relevant for runtime
             string s = gw.get_user_label(e);
             leda::string_istream I(s);
             I >> edge_weight[e];
@@ -75,35 +75,35 @@
         // mark these nodes and edges red
         edge ed;
         forall_inout_edges(ed, start_node) {
-           node n = g.opposite(start_node, ed); 
+           node n = g.opposite(start_node, ed); // O(1)
 
            gw.set_color(n, red);
            gw.set_color(ed, red);
            control_wait(WAIT);
 
-           node_edge_array[n] = ed; 
-           prio_queue.insert(n, edge_weight[ed]);
+           node_edge_array[n] = ed; // O(1)
+           prio_queue.insert(n, edge_weight[ed]); // O(log n)
         }
 
         do {
             // retrieve the first node of the priority queue 
             // and mark the edge and node as blue
-            node min_node = prio_queue.del_min();
-            tree_nodes[min_node] = 1;
+            node min_node = prio_queue.del_min(); // O(log n) deletes and outputs the node reachable with minimal effort
+            tree_nodes[min_node] = 1; // O(1)
 
             gw.set_user_label(min_node, string("%d", counter++));
             gw.set_color(min_node, blue);
             gw.set_color(node_edge_array[min_node], blue);
 
-            weight_sum += edge_weight[node_edge_array[min_node]];
+            weight_sum += edge_weight[node_edge_array[min_node]]; // O(1)
 
 
             control_wait(WAIT);
 
             // now handle all neighbour nodes of the current node
             edge ed;
-            forall_inout_edges(ed, min_node) {
-                node n = g.opposite(min_node, ed);
+            forall_inout_edges(ed, min_node) { // O(m)
+                node n = g.opposite(min_node, ed); // O(1)
             
                 if (tree_nodes[n] == 0) { // node is not already a tree node
                     // update the node if there is now an edge with lower weight than before
@@ -112,15 +112,15 @@
                         // mark old edge as green
                         gw.set_color(node_edge_array[n], green);
                         gw.set_color(ed, red); // new edge is red
-                        p(edge_weight[ed]);
-                        node_edge_array[n] = ed;
-                        prio_queue.decrease_p(n, edge_weight[ed]);
+                        p(edge_weight[ed]);// O(1)
+                        node_edge_array[n] = ed;// O(1)
+                        prio_queue.decrease_p(n, edge_weight[ed]); //O(1)
                     } else if (node_edge_array[n] == NULL) { // node is not already in the prio_queue, so insert it
                         p("insert");
                         // mark edge and node red
-                        p(edge_weight[ed]);
-                        node_edge_array[n] = ed;
-                        prio_queue.insert(n, edge_weight[ed]);
+                        p(edge_weight[ed]); // O(1)
+                        node_edge_array[n] = ed; // O(1)
+                        prio_queue.insert(n, edge_weight[ed]); // O(log(n))insert node into the priority queue 
                         gw.set_color(n, red);
                         gw.set_color(ed, red);
                     } else { // node is already reachable by better edge, so mark this edge in green
@@ -130,7 +130,7 @@
                     control_wait(WAIT);
                 }
             }
-        } while(!prio_queue.empty()); // until the prio queue is empty
+        } while(!prio_queue.empty()); // until the prio queue is empty O(1)
 
     }
 
@@ -182,10 +182,10 @@
     int weight_sum = 0;
     prim(g, gw, v, weight_sum);
 
-    gw.acknowledge(string("Weight is %d !", weight_sum)); // Dialogbox anzeigen und bestätigen lassen
+    gw.acknowledge(string("Weight is %d !", weight_sum)); // Dialogbox anzeigen und bestï¿½tigen lassen
     gw.edit(); // nochmal in den Edit-Modus, zum Anschauen :)
 
-    // Aufräumen und Ende
+    // Aufrï¿½umen und Ende
     gw.close();
     destroy_control();
     exit(0);

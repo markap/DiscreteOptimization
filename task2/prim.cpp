@@ -74,7 +74,7 @@
         // first: add all neighbours of startnode with weight of edge
         // mark these nodes and edges red
         edge ed;
-        forall_inout_edges(ed, start_node) {
+        forall_inout_edges(ed, start_node) { // O(m)
            node n = g.opposite(start_node, ed); // O(1)
 
            gw.set_color(n, red);
@@ -84,8 +84,9 @@
            node_edge_array[n] = ed; // O(1)
            prio_queue.insert(n, edge_weight[ed]); // O(log n)
         }
+        // total O(m *log n) - zu hoch daher zu ersetzen durch for all neighbor nodes oder so ähnlich
 
-        do {
+        do { // O(m)
             // retrieve the first node of the priority queue 
             // and mark the edge and node as blue
             node min_node = prio_queue.del_min(); // O(log n) deletes and outputs the node reachable with minimal effort
@@ -131,7 +132,7 @@
                 }
             }
         } while(!prio_queue.empty()); // until the prio queue is empty O(1)
-
+            // total O (m^2)!!!!
     }
 
 

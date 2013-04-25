@@ -2,7 +2,7 @@
 // unvisited part is displayed in yellow (default), completed nodes and edges in blue,
 // nodes still being processed are displayed in red,
 // and edges leading to a cycle are displayed in green
-
+// Runtime O(n+ m*log m)
 #include <iostream>
 #include <climits>
 #include <LEDA/graphics/graphwin.h>
@@ -50,30 +50,32 @@ void kruskal(graph &g, GraphWin &gw, int &weight_sum) {
 
     int counter = 0; // node number counter
     
-
+    int max= g.all_nodes().length(); // O(n+m)
     // get the weight of the edges from the user labels
     // store them in the edge_weight array
     // and add the edges to the priority queue
     edge_array<int> edge_weight(g);
     edge e;
-    forall_edges(e, g) {
+    forall_edges(e, g) { // O(m)
         string s = gw.get_user_label(e);
         leda::string_istream I(s);
         I >> edge_weight[e];
 
-        prio_queue.insert(edge_weight[e], e);
+        prio_queue.insert(edge_weight[e], e); // O(log m)
     }
+    
+    // total O(m * log m)
 
     // create the mst
-    do {
+    do { // O(m)
         // find the edge with minimum weight
-        pq_item it = prio_queue.find_min();
-        edge working_edge = prio_queue[it];
-        prio_queue.del_min();
+        pq_item it = prio_queue.find_min(); // O(1)
+        edge working_edge = prio_queue[it]; // O(1)
+        prio_queue.del_min(); // O(log m)
 
         // search the nodes to this edge
-        node source_node = g.source(working_edge);
-        node target_node = g.target(working_edge);
+        node source_node = g.source(working_edge); // O(1)
+        node target_node = g.target(working_edge); // O(1)
 
 
         gw.set_color(working_edge, red);
@@ -88,11 +90,11 @@ void kruskal(graph &g, GraphWin &gw, int &weight_sum) {
         control_wait(WAIT);
 
         // check if the two nodes are in different partitions
-        if (partition.same_block(source_node, target_node) == 0) {
-            partition.union_blocks(source_node, target_node);
+        if (partition.same_block(source_node, target_node) == 0) { // probably O(1)
+            partition.union_blocks(source_node, target_node); // runtime to be identified
 
             gw.set_color(working_edge, blue);
-            weight_sum += edge_weight[working_edge];
+            weight_sum += edge_weight[working_edge]; // O(1)
 
             // mark nodes only if not already marked
             if (gw.get_color(target_node) != blue) {
@@ -112,9 +114,10 @@ void kruskal(graph &g, GraphWin &gw, int &weight_sum) {
         }
 
 
-    } while (counter < g.all_nodes().length() || partition.number_of_blocks() != 1);
+    } while (counter < max || partition.number_of_blocks() != 1); // counter<max: O(1) number_of_blocks: probably O(1)
     // loop as long all nodes are marked and all partition blocks are connected
 }
+//total O(m*log m)
 
 
 // Main program
@@ -155,15 +158,15 @@ int main(int argc, char *argv[]) {
     forall_edges(e, g)
         gw.set_color(e, yellow);
 
-    gw.acknowledge("Start ?"); // Dialogbox anzeigen und bestätigen lassen
+    gw.acknowledge("Start ?"); // Dialogbox anzeigen und bestï¿½tigen lassen
 
     int weight_sum  = 0;
     kruskal(g, gw, weight_sum);
 
-    gw.acknowledge(string("Weight is %d !", weight_sum)); // Dialogbox anzeigen und bestätigen lassen
+    gw.acknowledge(string("Weight is %d !", weight_sum)); // Dialogbox anzeigen und bestï¿½tigen lassen
     gw.edit(); // nochmal in den Edit-Modus, zum Anschauen :)
 
-    // Aufräumen und Ende
+    // Aufrï¿½umen und Ende
     gw.close();
     destroy_control();
     exit(0);

@@ -1,10 +1,8 @@
 // Animation of prim's algorithm to find a minimum spanning tree
 // unvisited part is displayed in yellow (default), completed nodes and edges in blue,
-// nodes still being processed are displayed in red (elements of the search queue)
-// current node is depicted in green
-// edges belonging to search tree are firstly displayed in red, after processing eventually in blue
-// backward (additional) edges in green
-
+// nodes and their corresponding edges in the priority queue in red
+// edges which were regarded as minimum edge but are not after an upate anymore are displayed in green
+// as well as edges which are not minimum when you try to add them
 #include <iostream>
 #include <climits>
 #include <LEDA/graphics/graphwin.h>
@@ -17,7 +15,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0.3
+#define WAIT 0.5
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -38,17 +36,24 @@
     using leda::edge_array;
     using leda::node_partition;
 
+    // iterative prim algorithm to find a minimal spanning tree
+    // parameter:
+    //   graph g: the graph as reference
+    //   GraphWin gw: the graph windows as reference
+    //   node start_node: the starting node
+    //   int weight_sum: the sum of all edges of the spanning tree
     void prim(graph &g, GraphWin &gw, node &start_node, int &weight_sum) {
 
-        node_pq<int> prio_queue(g);
+        node_pq<int> prio_queue(g); // priority queue for nodes
         node_array<int> tree_nodes(g, 0);
 
-
+        // maps a node to the current minimum edge
         node_array<edge> node_edge_array(g);
         
-        int counter = 0;
+        int counter = 0; // node number counter
 
 
+        // get the edge weight from the user label
         edge_array<int> edge_weight(g);
 
         edge e;
@@ -59,16 +64,15 @@
 
         }
 
-        // first: add all neighbours of startnode, weight of edge
-        // node -> edge
 
+        // mark startnode 
         tree_nodes[start_node] = 1;
-
         gw.set_color(start_node, blue); 
         gw.set_user_label(start_node, string("%d", counter++));
         control_wait(WAIT);
 
-
+        // first: add all neighbours of startnode with weight of edge
+        // mark these nodes and edges red
         edge ed;
         forall_inout_edges(ed, start_node) {
            node n = g.opposite(start_node, ed); 
@@ -81,8 +85,9 @@
            prio_queue.insert(n, edge_weight[ed]);
         }
 
-        
         do {
+            // retrieve the first node of the priority queue 
+            // and mark the edge and node as blue
             node min_node = prio_queue.del_min();
             tree_nodes[min_node] = 1;
 
@@ -95,37 +100,38 @@
 
             control_wait(WAIT);
 
+            // now handle all neighbour nodes of the current node
             edge ed;
             forall_inout_edges(ed, min_node) {
                 node n = g.opposite(min_node, ed);
             
                 if (tree_nodes[n] == 0) { // node is not already a tree node
+                    // update the node if there is now an edge with lower weight than before
                     if (node_edge_array[n] != NULL and edge_weight[node_edge_array[n]] > edge_weight[ed]) {
                         p("update");
+                        // mark old edge as green
                         gw.set_color(node_edge_array[n], green);
-                        gw.set_color(ed, red);
+                        gw.set_color(ed, red); // new edge is red
                         p(edge_weight[ed]);
                         node_edge_array[n] = ed;
                         prio_queue.decrease_p(n, edge_weight[ed]);
-                    } else if (node_edge_array[n] == NULL) { // wenn nicht bereits im spanning tree
+                    } else if (node_edge_array[n] == NULL) { // node is not already in the prio_queue, so insert it
                         p("insert");
+                        // mark edge and node red
                         p(edge_weight[ed]);
                         node_edge_array[n] = ed;
                         prio_queue.insert(n, edge_weight[ed]);
                         gw.set_color(n, red);
                         gw.set_color(ed, red);
-                    } else {
+                    } else { // node is already reachable by better edge, so mark this edge in green
                         gw.set_color(ed, green);
                     }
 
                     control_wait(WAIT);
                 }
             }
-        } while(!prio_queue.empty());
+        } while(!prio_queue.empty()); // until the prio queue is empty
 
-        // min node auswählen
-        // nachbarn betrachten
-        // neu einfügen oder aktualisieren - Rückwärtsnode ist schon drinnen!!!
     }
 
 

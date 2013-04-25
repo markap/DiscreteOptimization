@@ -1,9 +1,7 @@
-// Animation of a breadth-first-search in an undirected graph
-// unvisited part is displayed in yellow (default), completed nodes in blue,
-// nodes still being processed are displayed in red (elements of the search queue)
-// current node is depicted in green
-// edges belonging to search tree are firstly displayed in red, after processing eventually in blue
-// backward (additional) edges in green
+// Animation of kruskal's algorithm to find a minimal spanning tree in a tree
+// unvisited part is displayed in yellow (default), completed nodes and edges in blue,
+// nodes still being processed are displayed in red,
+// and edges leading to a cycle are displayed in green
 
 #include <iostream>
 #include <climits>
@@ -39,17 +37,24 @@ using leda::edge_array;
 using leda::pq_item;
 using leda::node_partition;
 
+// iterative kruskal algorithm to find a minimal spanning tree
+// parameter:
+//   graph g: the graph as reference
+//   GraphWin gw: the graph windows as reference
+//   int weight_sum: the sum of all edges of the spanning tree
 void kruskal(graph &g, GraphWin &gw, int &weight_sum) {
 
-    p_queue<int, edge> prio_queue;
+    p_queue<int, edge> prio_queue; // priority queue for edges
 
-    node_partition partition = node_partition(g);
+    node_partition partition = node_partition(g); // graph's node partition
 
-    int counter = 0;
+    int counter = 0; // node number counter
     
 
+    // get the weight of the edges from the user labels
+    // store them in the edge_weight array
+    // and add the edges to the priority queue
     edge_array<int> edge_weight(g);
-
     edge e;
     forall_edges(e, g) {
         string s = gw.get_user_label(e);
@@ -57,17 +62,16 @@ void kruskal(graph &g, GraphWin &gw, int &weight_sum) {
         I >> edge_weight[e];
 
         prio_queue.insert(edge_weight[e], e);
-        p(edge_weight[e]);
     }
 
-    p("####################");
-
+    // create the mst
     do {
+        // find the edge with minimum weight
         pq_item it = prio_queue.find_min();
         edge working_edge = prio_queue[it];
         prio_queue.del_min();
 
-
+        // search the nodes to this edge
         node source_node = g.source(working_edge);
         node target_node = g.target(working_edge);
 
@@ -83,6 +87,7 @@ void kruskal(graph &g, GraphWin &gw, int &weight_sum) {
 
         control_wait(WAIT);
 
+        // check if the two nodes are in different partitions
         if (partition.same_block(source_node, target_node) == 0) {
             partition.union_blocks(source_node, target_node);
 
@@ -100,16 +105,15 @@ void kruskal(graph &g, GraphWin &gw, int &weight_sum) {
                 gw.set_color(source_node, blue);
             }
 
-        } else {
+        } else { // the nodes are already in the same partition which leads to a cycle
 
             gw.set_color(working_edge, green);
 
         }
 
-        p("number of block");
-        p(partition.number_of_blocks());
 
     } while (counter < g.all_nodes().length() || partition.number_of_blocks() != 1);
+    // loop as long all nodes are marked and all partition blocks are connected
 }
 
 

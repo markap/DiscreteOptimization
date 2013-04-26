@@ -50,7 +50,6 @@ void kruskal(graph &g, GraphWin &gw, int &weight_sum) {
 
     int counter = 0; // node number counter
     
-    int max= g.all_nodes().length(); // O(n+m)
     // get the weight of the edges from the user labels
     // store them in the edge_weight array
     // and add the edges to the priority queue
@@ -114,8 +113,8 @@ void kruskal(graph &g, GraphWin &gw, int &weight_sum) {
         }
 
 
-    } while (counter < max || partition.number_of_blocks() != 1); // counter<max: O(1) number_of_blocks: probably O(1)
-    // loop as long all nodes are marked and all partition blocks are connected
+    } while (partition.number_of_blocks() != 1); // number_of_blocks: probably O(1)
+    // loop as long as all partition blocks are connected
 }
 //total O(m*log m)
 

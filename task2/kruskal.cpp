@@ -36,8 +36,6 @@ using leda::p_queue;
 using leda::edge_array;
 using leda::pq_item;
 using leda::node_partition;
-using leda::gw_node_shape;
-using leda::rectangle_node;
 
 // iterative kruskal algorithm to find a minimal spanning tree
 // parameter:
@@ -154,7 +152,6 @@ int main(int argc, char *argv[]) {
         gw.set_label_type(v, user_label);    // User-Label anzeigen (statt Index-Label)
         gw.set_user_label(v, string("%d", bfsnum[v])); // User-Label auf bfsnum[v] setzen
         gw.set_color(v, yellow);
-        gw.set_shape(v, rectangle_node);
     }
     edge e;
     forall_edges(e, g)

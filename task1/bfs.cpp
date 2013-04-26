@@ -30,6 +30,8 @@ using leda::green;
 using leda::yellow;
 using leda::string;
 using leda::queue;
+using leda::gw_node_shape;
+using leda::rectangle_node;
 
 // iterative function to conduct breadth-first-search (bfs);
 // parameters:
@@ -126,6 +128,8 @@ int main(int argc, char *argv[]) {
         gw.set_label_type(v, user_label);    // User-Label anzeigen (statt Index-Label)
         gw.set_user_label(v, string("%d", bfsnum[v])); // User-Label auf bfsnum[v] setzen
         gw.set_color(v, yellow);
+        gw.set_shape(v, rectangle_node);
+        gw.set_width(v, 60);
     }
     edge e;
     forall_edges(e, g)

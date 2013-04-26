@@ -55,6 +55,10 @@ void dfs(node parent, node v, graph &g, GraphWin &gw, node_array<int> &globally_
 
         int found = 0; // cycle flag
         forall (tmp_node, cycle_nodes) { // drawing the cycle
+            // check if node is outside the cycle
+            if (globally_visited[tmp_node] == 1) {
+                continue;
+            }
 
             if (found == 1) {
                 gw.set_color(cycle_edges_nodes[tmp_node], green); // mark edge in green
@@ -70,40 +74,39 @@ void dfs(node parent, node v, graph &g, GraphWin &gw, node_array<int> &globally_
 
         gw.acknowledge("There is a cycle (no DAG)!");
         gw.edit();
-    } // end of cycle coloring
+    } else {// end of cycle coloring
 
-    // no cycle, so let's start with the real stuff
-    temporary_visited[v] = 1;  // mark node temporarily
-    gw.set_color(v, red);                           // Color nodes in red
-    gw.redraw();                                    // Update displayed graph
-    control_wait(WAIT);                              
+        // no cycle, so let's start with the real stuff
+        temporary_visited[v] = 1;  // mark node temporarily
+        gw.set_color(v, red);                           // Color nodes in red
+        gw.redraw();                                    // Update displayed graph
+        control_wait(WAIT);                              
 
-    edge e;
-    forall_out_edges(e, v) {  // all neighbor nodes of v
-        node w = g.opposite(v, e); // neighbor nodes on the other side of e
-        if (w != parent) {     // the node is not the parent node
+        edge e;
+        forall_out_edges(e, v) {  // all neighbor nodes of v
+            node w = g.opposite(v, e); // neighbor nodes on the other side of e
+            if (w != parent) {     // the node is not the parent node
 
-            gw.set_color(e, red);
-            cycle_nodes.append(v); // there is the possibility of detecting a cycle
-            cycle_edges_nodes[v] = e;
+                gw.set_color(e, red);
+                cycle_nodes.append(v); // there is the possibility of detecting a cycle
+                cycle_edges_nodes[v] = e;
 
-            gw.set_width(e, 2);
-            if (globally_visited[w] < 0) { // not yet globally visited
-                dfs(v, w, g, gw, globally_visited, temporary_visited, akt, all_nodes, cycle_nodes, cycle_edges_nodes); // recursive call with w
-                gw.set_color(e, blue);         // Color edge in blue
-            } 
-            control_wait(WAIT);         
-        } else { // mark edge to parent node as blue
-            gw.set_color(e, blue);
+                gw.set_width(e, 2);
+                if (globally_visited[w] < 0) { // not yet globally visited
+                    dfs(v, w, g, gw, globally_visited, temporary_visited, akt, all_nodes, cycle_nodes, cycle_edges_nodes); // recursive call with w
+                    gw.set_color(e, blue);         // Color edge in blue
+                } 
+                control_wait(WAIT);         
+            } else { // mark edge to parent node as blue
+                gw.set_color(e, blue);
+            }
         }
-    }
 
-    gw.set_user_label(v, string("%d", akt--)); // assign a number
-    globally_visited[v] = temporary_visited[v]; // mark as globally visited
-    all_nodes.remove(v); // remove node from all nodes still to be searched
-    cycle_nodes.remove(v); // remove node from potential cycle nodes
-    gw.set_color(v, blue); // Color node in blue
-    gw.redraw(); // Update displayed graph (to ensure correct updation)
+        gw.set_user_label(v, string("%d", akt--)); // assign a number
+        globally_visited[v] = temporary_visited[v]; // mark as globally visited
+        gw.set_color(v, blue); // Color node in blue
+        gw.redraw(); // Update displayed graph (to ensure correct updation)
+    }
 }
 
 
@@ -137,6 +140,11 @@ void topsort(node v, graph &g, GraphWin &gw, int &akt) {
     while (akt > 0) {
 
         v = all_nodes.pop_front();
+
+        // check if node is already done
+        if (globally_visited[v] == 1) {
+            continue;
+        }
 
         // search again recursively 
         dfs(v, v, g, gw, globally_visited, temporary_visited, akt, all_nodes, cycle_nodes, cycle_edges_nodes);

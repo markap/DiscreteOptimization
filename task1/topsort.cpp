@@ -2,6 +2,11 @@
 // by assigning a distinct number to each node such that
 // If (u,v) in E, u's number has to be smaller than v's. 
 // In case a cycle is found, search is aborted and cycle is depicted in green
+// node colors:
+// yellow: not yet visited
+// red: in process
+// blue: Ccmpleted
+// green: on a cycle
 
 #include <iostream>
 #include <climits>
@@ -154,7 +159,7 @@ void topsort(node v, graph &g, GraphWin &gw, int &akt) {
 // Haupt-Programm
 int main(int argc, char *argv[]) {
     p("los gehts");
-    // Fenster der Größe 800 x 600 zur Graphendarstellung erzeugen
+    // Fenster der Grï¿½ï¿½e 800 x 600 zur Graphendarstellung erzeugen
     GraphWin gw(800, 600);
 
     gw.display(); // Fenster auf den Bildschirm bringen
@@ -189,22 +194,22 @@ int main(int argc, char *argv[]) {
     forall_edges(e, g)
         gw.set_color(e, yellow);
 
-    // in dieser Variable merken wir uns die nächste zu vergebende Nummer
+    // in dieser Variable merken wir uns die nï¿½chste zu vergebende Nummer
     int akt = g.number_of_nodes();
 
     do {
         // jetzt lassen wir den Benutzer mit der Maus einen unbesuchten Knoten
-        // auswählen (wenn er danebenklickt, wird NULL zurückgeliefert),
+        // auswï¿½hlen (wenn er danebenklickt, wird NULL zurï¿½ckgeliefert),
         while ((v = gw.read_node()) == NULL || dfsnum[v] >= 0) ;
 
         // nun rufen wir topsort auf
         topsort(v, g, gw, akt);
     } while (akt > 0); // bis alle Knoten besucht wurden
 
-    gw.acknowledge("Ready!"); // Dialogbox anzeigen und bestätigen lassen
+    gw.acknowledge("Ready!"); // Dialogbox anzeigen und bestï¿½tigen lassen
     gw.edit(); // nochmal in den Edit-Modus, zum Anschauen :)
 
-    // Aufräumen und Ende
+    // Aufrï¿½umen und Ende
     gw.close();
     destroy_control();
     exit(0);

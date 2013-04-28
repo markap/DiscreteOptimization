@@ -55,26 +55,26 @@ void kruskal(graph &g, GraphWin &gw, int &weight_sum) {
     // and add the edges to the priority queue
     edge_array<int> edge_weight(g);
     edge e;
-    forall_edges(e, g) { // O(m)
+    forall_edges(e, g) { 
         string s = gw.get_user_label(e);
         leda::string_istream I(s);
         I >> edge_weight[e];
 
-        prio_queue.insert(edge_weight[e], e); // O(log m)
+        prio_queue.insert(edge_weight[e], e); 
     }
     
-    // total O(m * log m)
+
 
     // create the mst
     do { // O(m)
         // find the edge with minimum weight
-        pq_item it = prio_queue.find_min(); // O(1)
-        edge working_edge = prio_queue[it]; // O(1)
-        prio_queue.del_min(); // O(log m)
+        pq_item it = prio_queue.find_min(); 
+        edge working_edge = prio_queue[it]; 
+        prio_queue.del_min(); 
 
         // search the nodes to this edge
-        node source_node = g.source(working_edge); // O(1)
-        node target_node = g.target(working_edge); // O(1)
+        node source_node = g.source(working_edge); 
+        node target_node = g.target(working_edge); 
 
 
         gw.set_color(working_edge, red);
@@ -89,11 +89,11 @@ void kruskal(graph &g, GraphWin &gw, int &weight_sum) {
         control_wait(WAIT);
 
         // check if the two nodes are in different partitions
-        if (partition.same_block(source_node, target_node) == 0) { // probably O(1)
+        if (partition.same_block(source_node, target_node) == 0) { 
             partition.union_blocks(source_node, target_node); // runtime to be identified
 
             gw.set_color(working_edge, blue);
-            weight_sum += edge_weight[working_edge]; // O(1)
+            weight_sum += edge_weight[working_edge]; 
 
             // mark nodes only if not already marked
             if (gw.get_color(target_node) != blue) {
@@ -113,10 +113,10 @@ void kruskal(graph &g, GraphWin &gw, int &weight_sum) {
         }
 
 
-    } while (partition.number_of_blocks() != 1); // number_of_blocks: probably O(1)
+    } while (partition.number_of_blocks() != 1); 
     // loop as long as all partition blocks are connected
 }
-//total O(m*log m)
+
 
 
 // Main program

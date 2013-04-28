@@ -74,37 +74,37 @@
         // first: add all neighbours of startnode with weight of edge
         // mark these nodes and edges red
         edge ed;
-        forall_inout_edges(ed, start_node) { // O(n)
-           node n = g.opposite(start_node, ed); // O(1)
+        forall_inout_edges(ed, start_node) {
+           node n = g.opposite(start_node, ed); 
 
            gw.set_color(n, red);
            gw.set_color(ed, red);
            control_wait(WAIT);
 
-           node_edge_array[n] = ed; // O(1)
-           prio_queue.insert(n, edge_weight[ed]); // O(log n)
+           node_edge_array[n] = ed; 
+           prio_queue.insert(n, edge_weight[ed]); 
         }
-        // total O(m *log n) - zu hoch daher zu ersetzen durch for all neighbor nodes oder so ähnlich
+        
 
-        do { // O(n)
+        do { 
             // retrieve the first node of the priority queue 
             // and mark the edge and node as blue
-            node min_node = prio_queue.del_min(); // O(log n) deletes and outputs the node reachable with minimal effort
-            tree_nodes[min_node] = 1; // O(1)
+            node min_node = prio_queue.del_min(); //  deletes and outputs the node reachable with minimal effort
+            tree_nodes[min_node] = 1; 
 
             gw.set_user_label(min_node, string("%d", counter++));
             gw.set_color(min_node, blue);
             gw.set_color(node_edge_array[min_node], blue);
 
-            weight_sum += edge_weight[node_edge_array[min_node]]; // O(1)
+            weight_sum += edge_weight[node_edge_array[min_node]]; 
 
 
             control_wait(WAIT);
 
             // now handle all neighbour nodes of the current node
             edge ed;
-            forall_inout_edges(ed, min_node) { // O(n)
-                node n = g.opposite(min_node, ed); // O(1)
+            forall_inout_edges(ed, min_node) { 
+                node n = g.opposite(min_node, ed); 
             
                 if (tree_nodes[n] == 0) { // node is not already a tree node
                     // update the node if there is now an edge with lower weight than before
@@ -113,15 +113,15 @@
                         // mark old edge as green
                         gw.set_color(node_edge_array[n], green);
                         gw.set_color(ed, red); // new edge is red
-                        p(edge_weight[ed]);// O(1)
-                        node_edge_array[n] = ed;// O(1)
-                        prio_queue.decrease_p(n, edge_weight[ed]); //O(1)
+                        p(edge_weight[ed]);
+                        node_edge_array[n] = ed;
+                        prio_queue.decrease_p(n, edge_weight[ed]); 
                     } else if (node_edge_array[n] == NULL) { // node is not already in the prio_queue, so insert it
                         p("insert");
                         // mark edge and node red
-                        p(edge_weight[ed]); // O(1)
-                        node_edge_array[n] = ed; // O(1)
-                        prio_queue.insert(n, edge_weight[ed]); // O(log(n))insert node into the priority queue; amortised to O(1)
+                        p(edge_weight[ed]); 
+                        node_edge_array[n] = ed; 
+                        prio_queue.insert(n, edge_weight[ed]); // insert node into the priority queue; 
                         gw.set_color(n, red);
                         gw.set_color(ed, red);
                     } else { // node is already reachable by better edge, so mark this edge in green
@@ -131,8 +131,8 @@
                     control_wait(WAIT);
                 }
             }
-        } while(!prio_queue.empty()); // until the prio queue is empty O(1)
-            // total O (n^2) = O(m) because then all nodes are connected with at maximum solely one edge
+        } while(!prio_queue.empty()); // until the prio queue is empty 
+            
     }
 
 

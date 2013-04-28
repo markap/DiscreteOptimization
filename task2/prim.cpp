@@ -74,7 +74,7 @@
         // first: add all neighbours of startnode with weight of edge
         // mark these nodes and edges red
         edge ed;
-        forall_inout_edges(ed, start_node) { // O(m)
+        forall_inout_edges(ed, start_node) { // O(n)
            node n = g.opposite(start_node, ed); // O(1)
 
            gw.set_color(n, red);
@@ -86,7 +86,7 @@
         }
         // total O(m *log n) - zu hoch daher zu ersetzen durch for all neighbor nodes oder so ähnlich
 
-        do { // O(m)
+        do { // O(n)
             // retrieve the first node of the priority queue 
             // and mark the edge and node as blue
             node min_node = prio_queue.del_min(); // O(log n) deletes and outputs the node reachable with minimal effort
@@ -103,7 +103,7 @@
 
             // now handle all neighbour nodes of the current node
             edge ed;
-            forall_inout_edges(ed, min_node) { // O(m)
+            forall_inout_edges(ed, min_node) { // O(n)
                 node n = g.opposite(min_node, ed); // O(1)
             
                 if (tree_nodes[n] == 0) { // node is not already a tree node
@@ -121,7 +121,7 @@
                         // mark edge and node red
                         p(edge_weight[ed]); // O(1)
                         node_edge_array[n] = ed; // O(1)
-                        prio_queue.insert(n, edge_weight[ed]); // O(log(n))insert node into the priority queue 
+                        prio_queue.insert(n, edge_weight[ed]); // O(log(n))insert node into the priority queue; amortised to O(1)
                         gw.set_color(n, red);
                         gw.set_color(ed, red);
                     } else { // node is already reachable by better edge, so mark this edge in green
@@ -132,7 +132,7 @@
                 }
             }
         } while(!prio_queue.empty()); // until the prio queue is empty O(1)
-            // total O (m^2)!!!!
+            // total O (n^2) = O(m) because then all nodes are connected with at maximum solely one edge
     }
 
 

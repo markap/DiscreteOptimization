@@ -15,7 +15,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0.5
+#define WAIT 0.7
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 

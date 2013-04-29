@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
         gw.set_user_label(v, string("%d", bfsnum[v])); // User-Label auf bfsnum[v] setzen
         gw.set_color(v, yellow);
         gw.set_shape(v, rectangle_node);
-        gw.set_width(v, 60);
+        gw.set_width(v, 90);
     }
     edge e;
     forall_edges(e, g)

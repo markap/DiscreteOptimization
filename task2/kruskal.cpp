@@ -1,4 +1,4 @@
-// Animation of kruskal's algorithm to find a minimal spanning tree in a tree
+// Animation of kruskal's algorithm to find a minimum spanning tree in a tree
 // unvisited part is displayed in yellow (default), completed nodes and edges in blue,
 // nodes still being processed are displayed in red,
 // and edges leading to a cycle are displayed in green
@@ -14,7 +14,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0.5
+#define WAIT 0.7
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 

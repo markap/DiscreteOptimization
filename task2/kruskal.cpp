@@ -2,7 +2,6 @@
 // unvisited part is displayed in yellow (default), completed nodes and edges in blue,
 // nodes still being processed are displayed in red,
 // and edges leading to a cycle are displayed in green
-// Runtime O(n+ m*log m)
 #include <iostream>
 #include <climits>
 #include <LEDA/graphics/graphwin.h>
@@ -66,7 +65,7 @@ void kruskal(graph &g, GraphWin &gw, int &weight_sum) {
 
 
     // create the mst
-    do { // O(m)
+    do { 
         // find the edge with minimum weight
         pq_item it = prio_queue.find_min(); 
         edge working_edge = prio_queue[it]; 

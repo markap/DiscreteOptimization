@@ -82,12 +82,13 @@ void bellman(graph &g, GraphWin &gw, node &start_node) {
     int current_queue_size;
     int node_length = g.all_nodes().length();
     p(node_length);
-    for (int i = 0; i < node_length; i++) {
+    for (int i = 1; i < node_length; i++) {
 
         gw.message(string("Phase %d", i));
         current_queue_size = fifo_queue.size();
         // early termination
         if (current_queue_size == 0) {
+            p("queue is empty!");
             break;
         }
         int j = 0;
@@ -127,9 +128,14 @@ void bellman(graph &g, GraphWin &gw, node &start_node) {
                     from[n] = current_node;
                     node_map<int> from_map = from_chain[current_node];
                     if (from_map[n] == 1) {
+                        node cycle_begin = n;
+
+                        gw.set_color(edge_for_node[cycle_begin], orange); 
+                        gw.set_color(cycle_begin, orange);
+
 
                         node next;
-                        while ((next = from[n]) != NULL) {
+                        while ((next = from[n]) != cycle_begin) {
                             gw.set_color(edge_for_node[next], orange); 
                             gw.set_color(next, orange);
                             n = next;

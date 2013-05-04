@@ -1,8 +1,9 @@
-// Animation of prim's algorithm to find a minimum spanning tree
+// Animation of bellman - ford algorithm to find shortest path in a graph
 // unvisited part is displayed in yellow (default), completed nodes and edges in blue,
-// nodes and their corresponding edges in the priority queue in red
-// edges which were regarded as minimum edge but are not after an upate anymore are displayed in green
-// as well as edges which are not minimum when you try to add them
+// nodes in the priority queue in red
+// the current node popped from the queue is marked in green
+// already handled edges with longer paths are marked in green
+// possible cycles are marked in orange
 #include <iostream>
 #include <climits>
 #include <LEDA/graphics/graphwin.h>
@@ -16,7 +17,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0
+#define WAIT 0.5
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -40,14 +41,22 @@ using leda::edge_array;
 using leda::node_partition;
 using std::numeric_limits;
 
-
+// marks the cycle
+// parameters:
+//  GraphWin gw: the graph window
+//  graph g: the graph
+//  node n: the starting node
+//  node_array<node> from: the node-from chain
+//  node_array<edge> edge_for_node: edge for node relation
 void mark_cycle(GraphWin &gw, graph &g, node &n, node_array<node> &from, node_array<edge> &edge_for_node) {
 
+    // mark the beginning node
     node cycle_begin = n;
     gw.set_color(edge_for_node[cycle_begin], orange); 
     gw.set_color(cycle_begin, orange);
      
 
+    // mark the cycle
     node next;
     node last_node;
     while ((next = from[n]) != cycle_begin) {
@@ -78,6 +87,12 @@ void mark_cycle(GraphWin &gw, graph &g, node &n, node_array<node> &from, node_ar
     gw.acknowledge("cycle");
 }
 
+
+// the bellman ford algorithm 
+// parameters:
+//  graph g: the graph
+//  GraphWin gw: the graph window
+//  node n: the starting node
 void bellman(graph &g, GraphWin &gw, node &start_node) {
 
     queue<node> fifo_queue; 
@@ -87,8 +102,10 @@ void bellman(graph &g, GraphWin &gw, node &start_node) {
     node_array<int> node_in_queue(g, 0);
     node_array<edge> edge_for_node(g);
 
+    // a distance array with relation: node -> infinity
     node_array<double> distance(g, numeric_limits<double>::infinity());
 
+    // the from chain to allow early detection
     node_array<node_map<int> > from_chain(g);
     node v;
     forall(v, g.all_nodes()) {
@@ -109,6 +126,7 @@ void bellman(graph &g, GraphWin &gw, node &start_node) {
     }
 
     
+    // handle the start node
     distance[start_node] = 0;
     gw.set_user_label(start_node, string("%.1f", +0.0));
     fifo_queue.append(start_node);
@@ -120,6 +138,7 @@ void bellman(graph &g, GraphWin &gw, node &start_node) {
     int current_queue_size;
     int node_length = g.all_nodes().length();
     p(node_length);
+    // the outer loop loops n-1 times
     for (int i = 1; i < node_length; i++) {
 
         gw.message(string("Phase %d", i));
@@ -129,6 +148,7 @@ void bellman(graph &g, GraphWin &gw, node &start_node) {
             p("queue is empty!");
             break;
         }
+        // loop through all elements of fifo_queue at the beginning of while loop
         int j = 0;
         while (j < current_queue_size && !fifo_queue.empty()) {
             j++;
@@ -141,29 +161,33 @@ void bellman(graph &g, GraphWin &gw, node &start_node) {
 
             control_wait(WAIT);
 
+            // check all the outgoing edges
             edge e;
             forall_out_edges(e, current_node) {
             
                 node n = g.opposite(current_node, e);
 
                 double d = distance[current_node] + edge_weight[e];
-                if (d < distance[n]) {
+                if (d < distance[n]) { // update if distance is smaller
                     if (edge_for_node[n] != NULL) {
                         gw.set_color(edge_for_node[n], green);
                     }
                     edge_for_node[n] = e;
                     distance[n] = d;
                     from[n] = current_node;
+
+                    // check for early termination
                     node_map<int> from_map = from_chain[current_node];
                     if (from_map[n] == 1) {
                         p("early termination");
                         mark_cycle(gw, g, n, from, edge_for_node);
                         return;
                     }
+                    // add node to the from_chain
                     from_map[current_node] = 1;
                     from_chain[n] = from_map;
 
-                    // fuege nur ein wenn nicht schon in queue
+                    // add node only if not already in queue
                     if (node_in_queue[n] == 0) {
                         fifo_queue.append(n);
                         node_in_queue[n] = 1;
@@ -176,11 +200,13 @@ void bellman(graph &g, GraphWin &gw, node &start_node) {
                     gw.set_user_label(n, string("%.1f", d));
                     control_wait(WAIT);
                 
-                } else {
+                } else { // no smaller distance
                     gw.set_color(e, green);
                 }
 
             }
+
+            // node is done: mark it blue
             gw.set_color(current_node, blue);
             if (edge_for_node[current_node] != NULL) {
                 gw.set_color(edge_for_node[current_node], blue);
@@ -189,6 +215,7 @@ void bellman(graph &g, GraphWin &gw, node &start_node) {
         }
     }
 
+    // if fifo_queue is not empty after n-1 rounds, there is a cycle
     if (!fifo_queue.empty()) {
         node n = fifo_queue.pop();
         mark_cycle(gw, g, n, from, edge_for_node);

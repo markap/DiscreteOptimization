@@ -57,7 +57,7 @@ void dijkstra(graph &g, GraphWin &gw, node &start_node) {
     edge_array<double> edge_weight(g);
 
     edge e;
-    forall_edges(e, g) { // not relevant for runtime
+    forall_edges(e, g) { 
         string s = gw.get_user_label(e);
         leda::string_istream I(s);
         I >> edge_weight[e];
@@ -104,7 +104,6 @@ void dijkstra(graph &g, GraphWin &gw, node &start_node) {
                 gw.set_color(e, red);
                 p(distance[n]);
                 p(edge_weight[e]);
-                //gw.set_user_label(n, string("%s -> %.0f", gw.get_user_label(n), d));
                 gw.set_user_label(n, string("%.0f", d));
                 control_wait(WAIT);
                 
@@ -113,7 +112,6 @@ void dijkstra(graph &g, GraphWin &gw, node &start_node) {
                 p("update");
                 prio_queue.decrease_p(n, d);
                 distance[n] = d;
-                //gw.set_user_label(n, string("%s -> %.0f", gw.get_user_label(n), distance[n]));
                 gw.set_user_label(n, string("%.0f", d));
                 gw.set_color(e, red);
                 gw.set_color(from_edge[n], green);
@@ -127,18 +125,6 @@ void dijkstra(graph &g, GraphWin &gw, node &start_node) {
         }
     }
 
-    /**
-    // fragen ob das von der laufzeit ok ist
-    // ist aber eigtl nur markieren ...
-    node n;
-    forall_nodes(n, g) {
-        node next;
-        while ((next = from[n]) != NULL) {
-           gw.set_color(from_edge[n], blue); 
-           n = next;
-        }
-    }
-    */
 
 }
 

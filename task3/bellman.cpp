@@ -16,7 +16,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 2
+#define WAIT 0
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -39,6 +39,44 @@ using leda::node_map;
 using leda::edge_array;
 using leda::node_partition;
 using std::numeric_limits;
+
+
+void mark_cycle(GraphWin &gw, graph &g, node &n, node_array<node> &from, node_array<edge> &edge_for_node) {
+
+    node cycle_begin = n;
+    gw.set_color(edge_for_node[cycle_begin], orange); 
+    gw.set_color(cycle_begin, orange);
+     
+
+    node next;
+    node last_node;
+    while ((next = from[n]) != cycle_begin) {
+        if (next == NULL) {
+           break;
+        }
+        last_node = next;
+        if (edge_for_node[next] != NULL) {
+           gw.set_color(edge_for_node[next], orange); 
+        }
+        gw.set_color(next, orange);
+        n = next;
+    }
+
+    // we loop n-1 times, so we need to find the single edge btw the cycle_begin node
+    // and the last node (only if the circle occurs at the end of our bellman
+    // ford algorithm - not if we found the circle with early detection)
+    if (edge_for_node[last_node] == NULL) {
+        p("no early termination");
+        edge e;
+        forall_out_edges(e, cycle_begin) {
+            if (last_node == g.opposite(cycle_begin, e)) {
+                gw.set_color(e, orange);
+            }
+        }
+    }
+
+    gw.acknowledge("cycle");
+}
 
 void bellman(graph &g, GraphWin &gw, node &start_node) {
 
@@ -108,16 +146,6 @@ void bellman(graph &g, GraphWin &gw, node &start_node) {
             
                 node n = g.opposite(current_node, e);
 
-/**
-                node_map<int> m(g);
-                m[n] = 1;
-                node_map<int> &m2 = m;
-                m2[current_node] = 1;
-                p(m[current_node]);
-                p(m2[current_node]);
-                exit(1);
-                */
-
                 double d = distance[current_node] + edge_weight[e];
                 if (d < distance[n]) {
                     if (edge_for_node[n] != NULL) {
@@ -128,20 +156,8 @@ void bellman(graph &g, GraphWin &gw, node &start_node) {
                     from[n] = current_node;
                     node_map<int> from_map = from_chain[current_node];
                     if (from_map[n] == 1) {
-                        node cycle_begin = n;
-
-                        gw.set_color(edge_for_node[cycle_begin], orange); 
-                        gw.set_color(cycle_begin, orange);
-
-
-                        node next;
-                        while ((next = from[n]) != cycle_begin) {
-                            gw.set_color(edge_for_node[next], orange); 
-                            gw.set_color(next, orange);
-                            n = next;
-                        }
-
-                        gw.acknowledge("cycle");
+                        p("early termination");
+                        mark_cycle(gw, g, n, from, edge_for_node);
                         return;
                     }
                     from_map[current_node] = 1;
@@ -171,6 +187,11 @@ void bellman(graph &g, GraphWin &gw, node &start_node) {
             }
             control_wait(WAIT);
         }
+    }
+
+    if (!fifo_queue.empty()) {
+        node n = fifo_queue.pop();
+        mark_cycle(gw, g, n, from, edge_for_node);
     }
 
 }

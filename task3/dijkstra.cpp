@@ -17,7 +17,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 1
+#define WAIT 0.7
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -66,6 +66,7 @@
 
     
     distance[start_node] = 0; // set distance to start node to 0
+    gw.set_user_label(start_node, string("0")); // show current distance in node visible for user during runtime
     prio_queue.insert(start_node, 0); // insert start node in priority queue
 
     gw.set_color(start_node, red); // color node in red

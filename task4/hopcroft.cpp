@@ -56,11 +56,17 @@ void dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, nod
                 if (level[opposite_node] == level[v] + 1) { // level must be greater 1
                     if (free[opposite_node] == 1) {
                         invert = 1;
+                        level[opposite_node] = -1;
+                        gw.set_color(opposite_node, blue);
+                        gw.set_user_label(opposite_node, string("%d", level[opposite_node]));
+                        control_wait(WAIT);
                         // invertiere
                         if (matching[e] == 0) {
                             gw.set_color(e, blue);
                             free[opposite_node] = 0;
+                            gw.set_border_width(opposite_node, 2);
                             free[v] = 0;
+                            gw.set_border_width(v, 2);
                             matching[e] = 1;
                         } else {
                             matching[e] = 0; 
@@ -71,7 +77,10 @@ void dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, nod
                         if (invert == 1) {
                             if (matching[e] == 0) {
                                 free[opposite_node] = 0;
+
+                                gw.set_border_width(opposite_node, 2);
                                 free[v] = 0;
+                                gw.set_border_width(v, 2);
                                 matching[e] = 1;
                             } else {
                                 matching[e] = 0; 
@@ -121,33 +130,40 @@ void hopcroft(graph &g, GraphWin &gw) {
         }
 
         gw.set_user_label(n, string("-1"));
+        gw.set_border_width(n, 5);
     }
 
     control_wait(WAIT);
-
-    forall(n, v_set_1) {
-        fifo_queue.append(n);
-        level[n] = 0;
-        gw.set_user_label(n, string("0"));
-        control_wait(WAIT);
-    }
-
+    int set_index = 0;
 
     while (true) {
 
+        if (fifo_queue.empty()) {
+            level.use_node_data(g, -1);
+            forall(n, v_set_1) {
+                if (free[n] == 1) {
+                    fifo_queue.append(n);
+                    level[n] = 0;
+                    gw.set_user_label(n, string("0"));
+                    control_wait(WAIT);
+                }
+            }
+        }
 
 
         int fifo_queue_length = fifo_queue.length();
         int free_v2_elem_in_list = 0;
-        int set_index = 0;
         for (int i = 0; i < fifo_queue_length; i++) {
 
             node current_node = fifo_queue.pop();
             gw.set_color(current_node, red);
+            p("neuer knoten");
             control_wait(WAIT);
+
 
             edge e;
             forall_inout_edges(e, current_node) {
+                p("und die nächste edge");
                 gw.set_color(e, green);
                 control_wait(WAIT);
                 if ((set_index % 2) == 0) { // nodes out of v_set_1
@@ -166,15 +182,20 @@ void hopcroft(graph &g, GraphWin &gw) {
                             control_wait(WAIT);
 
                             if (free[opposite_node] == 1) {
+                                p("free");
                                 free_v2_elem_in_list = 1;
                             }
                         }
                     }    
 
                 } else { // nodes out of v_set_2
+                    p(" e 1");
+                    gw.set_color(current_node, orange);
                     if (matching[e] == 1) {  // edge is matched
+                        p("e 2");
                         node opposite_node = g.opposite(current_node, e); 
                         if (level[opposite_node] == -1) {
+                            p("e 3");
 
                             fifo_queue.append(opposite_node);
                             level[opposite_node] = level[current_node] + 1;
@@ -193,6 +214,10 @@ void hopcroft(graph &g, GraphWin &gw) {
         }
         set_index++;
 
+        if (fifo_queue.empty()) {
+            break;
+        }
+
         if (free_v2_elem_in_list == 1) {
             p("dfs");
             node v;
@@ -203,16 +228,16 @@ void hopcroft(graph &g, GraphWin &gw) {
                     p("start dfs");
                     dfs(gw, g, v, round, level, free, matching, invert);
                     p("end dfs");
-                    break;
+                    control_wait(WAIT);
                 }
             }
             set_index = 0; // check
+            fifo_queue.clear();
+
         }
+        p("ende");
 
 
-        if (!fifo_queue.empty()) {
-            break;
-        }
 
     }
 

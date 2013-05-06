@@ -17,7 +17,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 2
+#define WAIT 0 
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -42,9 +42,11 @@ using leda::node_partition;
 using std::numeric_limits;
 
 
-void dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node_array<int> &free, edge_array<int> &matching, int invert) {
+int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node_array<int> &free, edge_array<int> &matching) {
 
     int next_round = round + 1;
+
+    int invert;
 
     gw.set_color(v, blue);
 
@@ -55,7 +57,6 @@ void dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, nod
                 node opposite_node = g.opposite(v, e);
                 if (level[opposite_node] == level[v] + 1) { // level must be greater 1
                     if (free[opposite_node] == 1) {
-                        invert = 1;
                         level[opposite_node] = -1;
                         gw.set_color(opposite_node, blue);
                         gw.set_user_label(opposite_node, string("%d", level[opposite_node]));
@@ -66,26 +67,32 @@ void dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, nod
                             free[opposite_node] = 0;
                             gw.set_border_width(opposite_node, 2);
                             free[v] = 0;
+                            gw.set_width(e, 5);
                             gw.set_border_width(v, 2);
                             matching[e] = 1;
                         } else {
                             matching[e] = 0; 
+                            gw.set_width(e, 2);
                         }
-                        break;
+                        return 1;
                     } else {
-                        dfs(gw, g, opposite_node, next_round, level, free, matching, invert);
+                        invert = dfs(gw, g, opposite_node, next_round, level, free, matching);
                         if (invert == 1) {
                             if (matching[e] == 0) {
                                 free[opposite_node] = 0;
 
                                 gw.set_border_width(opposite_node, 2);
+                                gw.set_width(e, 5);
                                 free[v] = 0;
                                 gw.set_border_width(v, 2);
                                 matching[e] = 1;
                             } else {
+                                gw.set_width(e, 2);
                                 matching[e] = 0; 
                             }
-                            break;
+                            level[v] = -1;
+                            gw.set_user_label(v, string("%d", level[v]));
+                            return 1;
    
                         }
                     }
@@ -96,8 +103,25 @@ void dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, nod
             if (matching[e] == 1) { // matched
                 node opposite_node = g.opposite(v, e);
                 if (level[opposite_node] == level[v] + 1) { // level must be greater 1
-                    dfs(gw, g, opposite_node, next_round, level, free, matching, invert); }
+                     invert = dfs(gw, g, opposite_node, next_round, level, free, matching); }
+                     if (invert == 1) {
+                         if (matching[e] == 0) {
+                             free[opposite_node] = 0;
 
+                             gw.set_border_width(opposite_node, 10);
+                             free[v] = 0;
+                             gw.set_border_width(v, 10);
+                             gw.set_width(e, 5);
+                             matching[e] = 1;
+                         } else {
+                             matching[e] = 0; 
+                             gw.set_width(e, 2);
+                         }
+                         level[v] = -1;
+                         gw.set_user_label(v, string("%d", level[v]));
+                         return 1;
+   
+                     }
             }
 
         }
@@ -105,6 +129,7 @@ void dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, nod
 
     level[v] = -1;
     gw.set_user_label(v, string("%d", level[v]));
+    return 0;
 
 }
 
@@ -215,6 +240,7 @@ void hopcroft(graph &g, GraphWin &gw) {
         set_index++;
 
         if (fifo_queue.empty()) {
+            p("queue is empty - done ");
             break;
         }
 
@@ -224,9 +250,8 @@ void hopcroft(graph &g, GraphWin &gw) {
             forall(v, v_set_1) {
                 if (free[v] == 1) {
                     int round = 0;
-                    int invert = 0;
                     p("start dfs");
-                    dfs(gw, g, v, round, level, free, matching, invert);
+                    dfs(gw, g, v, round, level, free, matching);
                     p("end dfs");
                     control_wait(WAIT);
                 }

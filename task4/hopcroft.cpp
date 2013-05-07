@@ -1,9 +1,22 @@
-// Animation of bellman - ford algorithm to find shortest path in a graph
-// unvisited part is displayed in yellow (default), completed nodes and edges in blue,
-// nodes in the priority queue in red
-// the current node popped from the queue is marked in green
-// already handled edges with longer paths are marked in green
-// possible cycles are marked in orange
+//
+//
+// Animation of Hopcraft-Karp algortihm to find a maximum matching in bipartite graphs
+//
+// -> all nodes are depicted in yellow by default
+// -> at the beginning of each dfs or bfs, nodes are displayed in orange, edges in black
+// -> free nodes are depicted with a bigger border width
+// -> matched edges are illustrated with a bigger width
+//
+// -> bfs: nodes within the queue and its edges are red
+// -> bfs: current node and current edge is green
+// -> bfs: completed nodes and edges are blue
+//
+// -> dfs: completed nodes and edges are blue
+// -> dfs: current edge is green
+//
+// -> all matched edges and all nodes are depicted in violet at the end
+//
+
 #include <iostream>
 #include <math.h>
 #include <climits>
@@ -45,8 +58,11 @@ using leda::node_partition;
 using std::numeric_limits;
 
 
-// @todo early termination
-
+// computational upper bound
+// 
+// parameters:
+//   int maximum_matching: the maximum matching for the current bipartite graph
+//   int current_matching: the current matching
 double upper_bound(int maximum_matching, int current_matching) {
 
     double x = current_matching / (maximum_matching - current_matching);
@@ -55,18 +71,32 @@ double upper_bound(int maximum_matching, int current_matching) {
 }
 
 
+// the depth first search
+// parameters:
+//   GraphWin gw: the window as reference
+//   graph g: the graph as a reference
+//   node v: current node
+//   int round: a flag to find out if v is a element of set 1 or set 2
+//   node_array<int> level: the level-node-relation
+//   node_array<int> free: stores whether node is free
+//   edge<int> matching: stores whether edge is matched
+//   node parent: the parent of v
+//   int current_matching: the current matching
 int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node_array<int> &free, edge_array<int> &matching, node &parent, int &current_matching) {
 
     int next_round = round + 1;
 
-    int invert;
+    int invert;  // stores whether we should invert the path or not (boolean)
 
+    // current node is blue
     gw.set_color(v, blue);
     control_wait(WAIT);
 
+    // check all edges of v
     edge e;
     forall_inout_edges(e, v) {
         node opposite_node = g.opposite(v, e);
+        // dont check parent node
         if (opposite_node == parent) {
             p("dont check parent");
             continue;
@@ -74,7 +104,7 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
         gw.set_color(e, green);
         control_wait(WAIT);
 
-        if ((round % 2) == 0) {
+        if ((round % 2) == 0) { // node v is from vertex set 1
             if (matching[e] == 0) { // unmatched
                 if (level[opposite_node] == level[v] + 1) { // level must be greater 1
 
@@ -82,6 +112,7 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
                     gw.set_color(opposite_node, blue);
                     control_wait(WAIT);
 
+                    // check for augmented path
                     if (free[opposite_node] == 1) {
                         level[opposite_node] = -1;
                         gw.set_color(opposite_node, blue);
@@ -90,7 +121,7 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
                         level[v] = -1;
                         gw.set_user_label(v, string("%d", level[v]));
                         
-                        // invertiere
+                        // invert path
                         if (matching[e] == 0) {
                             gw.set_color(e, blue);
                             free[opposite_node] = 0;
@@ -107,9 +138,10 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
                         }
                         control_wait(WAIT);
                         return 1;
-                    } else {
+                    } else { // no augmented path yet
+                        // call dfs for next node
                         invert = dfs(gw, g, opposite_node, next_round, level, free, matching, v, current_matching);
-                        if (invert == 1) {
+                        if (invert == 1) { // invert path
                             if (matching[e] == 0) {
                                 free[opposite_node] = 0;
 
@@ -124,6 +156,7 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
                                 matching[e] = 0; 
                                 current_matching--;
                             }
+                            
                             level[v] = -1;
                             gw.set_user_label(v, string("%d", level[v]));
                             control_wait(WAIT);
@@ -134,7 +167,7 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
                 }
 
             }
-        } else {
+        } else { // v is a element of vertex set 2
             if (matching[e] == 1) { // matched
                 if (level[opposite_node] == level[v] + 1) { // level must be greater 1
 
@@ -142,8 +175,11 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
                     gw.set_color(opposite_node, blue);
                     control_wait(WAIT);
 
+                    // call dfs for opposite_node
                     invert = dfs(gw, g, opposite_node, next_round, level, free, matching, v, current_matching); }
+
                     if (invert == 1) {
+                        // invert path
                         if (matching[e] == 0) {
                             free[opposite_node] = 0;
 
@@ -175,21 +211,30 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
 
 }
 
+
+// the main function of the hopcroft karp algorithm
+// executes the simultaneous bfs and the recursive dfs
+//
+// parameters:
+//   graph g: the graph as reference
+//   GraphWin gw: the window as reference
+//
 void hopcroft(graph &g, GraphWin &gw) {
 
-    list<node> v_set_1;
-    list<node> v_set_2;
+    list<node> v_set_1; // vertex set 1
+    list<node> v_set_2; // vertex set 2
 
-    node_array<int> level(g, -1);
-    edge_array<int> matching(g, 0);
-    node_array<int> free(g, 1);
-    node_array<edge> bfs_edge_to_node(g, NULL);
-    node_array<node> bfs_from(g, NULL);
+    node_array<int> level(g, -1); // init every level with -1 at start
+    edge_array<int> matching(g, 0); // in the beginning all edges are unmatched
+    node_array<int> free(g, 1); // in the beginning all nodes are free
+    node_array<edge> bfs_edge_to_node(g, NULL); // stores the relation edge-node for bfs
+    node_array<node> bfs_from(g, NULL); // stores the bfs from node for bfs
 
     queue<node> fifo_queue;
 
-    int nodes_count = 0;
-
+    int nodes_count = 0; // counts all nodes of the graph
+    
+    // split up the nodes into vertex set 1 and set 2 depending on the user label
     node n;
     forall_nodes(n, g) { 
         string s = gw.get_user_label(n);
@@ -206,13 +251,14 @@ void hopcroft(graph &g, GraphWin &gw) {
 
     int maximum_matching = nodes_count / 2;
     int current_matching = 0;
-    int upper_b;
+    int upper_b; // the upper bound of a shortest augmenting path
 
     control_wait(WAIT);
-    int set_index = 0;
+    int set_index = 0; // determines whether the current node in the bfs is from vertex set 1 or 2
 
-    while (true) {
+    while (true) { // the outer while loop
 
+        // start a new bfs round
         if (fifo_queue.empty()) {
             p("max");
             p(maximum_matching);
@@ -223,8 +269,9 @@ void hopcroft(graph &g, GraphWin &gw) {
                 break;
             }
             upper_b = upper_bound(maximum_matching, current_matching);
-            gw.message(string("upper bound: %d - BFS", upper_b));
+            gw.message(string("Upper bound: %d - Breadth First Search", upper_b));
 
+            // init
             level.use_node_data(g, -1);
             bfs_from.use_node_data(g, NULL);
             bfs_from.use_node_data(g, NULL);
@@ -240,7 +287,7 @@ void hopcroft(graph &g, GraphWin &gw) {
             }
             control_wait(WAIT);
 
-
+            // add all free nodes from vertex set 1 to the queue
             forall(n, v_set_1) {
                 if (free[n] == 1) {
                     fifo_queue.append(n);
@@ -253,6 +300,7 @@ void hopcroft(graph &g, GraphWin &gw) {
         }
 
 
+        // start the bfs for the nodes which are in the queue in the beginning
         int fifo_queue_length = fifo_queue.length();
         int free_v2_elem_in_list = 0;
         for (int i = 0; i < fifo_queue_length; i++) {
@@ -263,6 +311,7 @@ void hopcroft(graph &g, GraphWin &gw) {
             control_wait(WAIT);
 
 
+            // check all edges of current node
             edge e;
             forall_inout_edges(e, current_node) {
                 p("und die nächste edge");
@@ -279,7 +328,7 @@ void hopcroft(graph &g, GraphWin &gw) {
                     p("d 1");
                     if (matching[e] == 0) {  // edge is unmatched
                     p("d 2");
-                        if (level[opposite_node] == -1) {
+                        if (level[opposite_node] == -1) {  // node is unvisited so add it to the fifo_queue
                             p("d3");
                             level[opposite_node] = level[current_node] + 1;
                             fifo_queue.append(opposite_node);
@@ -291,6 +340,7 @@ void hopcroft(graph &g, GraphWin &gw) {
                             bfs_from[opposite_node] = current_node;
                             control_wait(WAIT);
 
+                            // check for free nodes to start later dfs
                             if (free[opposite_node] == 1) {
                                 p("free");
                                 free_v2_elem_in_list = 1;
@@ -302,7 +352,7 @@ void hopcroft(graph &g, GraphWin &gw) {
                     p(" e 1");
                     if (matching[e] == 1) {  // edge is matched
                         p("e 2");
-                        if (level[opposite_node] == -1) {
+                        if (level[opposite_node] == -1) {  // node is unvisited so add it to the fifo_queue
                             p("e 3");
 
                             fifo_queue.append(opposite_node);
@@ -330,14 +380,16 @@ void hopcroft(graph &g, GraphWin &gw) {
         }
         set_index++;
 
+        // stop if fifo_queue is empty
         if (fifo_queue.empty()) {
             p("queue is empty - done ");
             break;
         }
 
+        // there is a free node which is element of vertex set 2 -> start dfs
         if (free_v2_elem_in_list == 1) {
             p("dfs");
-            gw.message(string("upper bound: %d - DFS", upper_b));
+            gw.message(string("Upper bound: %d - Depth First Search", upper_b));
 
 
             // just for animation
@@ -351,6 +403,7 @@ void hopcroft(graph &g, GraphWin &gw) {
             control_wait(WAIT);
 
 
+            // start dfs for all free nodes of vertex set 1
             node v;
             forall(v, v_set_1) {
                 if (free[v] == 1) {
@@ -361,8 +414,8 @@ void hopcroft(graph &g, GraphWin &gw) {
                     control_wait(WAIT);
                 }
             }
-            set_index = 0; // check
-            fifo_queue.clear();
+            set_index = 0; 
+            fifo_queue.clear(); // clear fifo_queue to enable new bfs
 
         }
         p("ende");
@@ -371,7 +424,7 @@ void hopcroft(graph &g, GraphWin &gw) {
 
     }
 
-    // animate the matching edges in one color
+    // animate the matching edges in one color in the end
     edge edg;
     forall_edges(edg, g) {
 

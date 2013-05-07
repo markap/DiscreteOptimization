@@ -46,7 +46,7 @@ using std::numeric_limits;
 // @todo early termination
 
 
-int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node_array<int> &free, edge_array<int> &matching, node &parent) {
+int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node_array<int> &free, edge_array<int> &matching, node &parent, int &current_matching) {
 
     int next_round = round + 1;
 
@@ -90,14 +90,16 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
                             gw.set_width(e, 10);
                             gw.set_border_width(v, 1);
                             matching[e] = 1;
+                            current_matching++;
                         } else {
                             matching[e] = 0; 
                             gw.set_width(e, 2);
+                            current_matching--;
                         }
                         control_wait(WAIT);
                         return 1;
                     } else {
-                        invert = dfs(gw, g, opposite_node, next_round, level, free, matching, v);
+                        invert = dfs(gw, g, opposite_node, next_round, level, free, matching, v, current_matching);
                         if (invert == 1) {
                             if (matching[e] == 0) {
                                 free[opposite_node] = 0;
@@ -107,9 +109,11 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
                                 free[v] = 0;
                                 gw.set_border_width(v, 1);
                                 matching[e] = 1;
+                                current_matching++;
                             } else {
                                 gw.set_width(e, 1);
                                 matching[e] = 0; 
+                                current_matching--;
                             }
                             level[v] = -1;
                             gw.set_user_label(v, string("%d", level[v]));
@@ -129,7 +133,7 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
                     gw.set_color(opposite_node, blue);
                     control_wait(WAIT);
 
-                    invert = dfs(gw, g, opposite_node, next_round, level, free, matching, v); }
+                    invert = dfs(gw, g, opposite_node, next_round, level, free, matching, v, current_matching); }
                     if (invert == 1) {
                         if (matching[e] == 0) {
                             free[opposite_node] = 0;
@@ -139,9 +143,11 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
                             gw.set_border_width(v, 10);
                             gw.set_width(e, 5);
                             matching[e] = 1;
+                            current_matching++;
                         } else {
                             matching[e] = 0; 
                             gw.set_width(e, 1);
+                            current_matching--;
                         }
                         level[v] = -1;
                         gw.set_user_label(v, string("%d", level[v]));
@@ -197,6 +203,10 @@ void hopcroft(graph &g, GraphWin &gw) {
     while (true) {
 
         if (fifo_queue.empty()) {
+            p("max");
+            p(maximum_matching);
+            p("current");
+            p(current_matching);
             gw.acknowledge("BFS init");
             level.use_node_data(g, -1);
 
@@ -320,7 +330,7 @@ void hopcroft(graph &g, GraphWin &gw) {
                 if (free[v] == 1) {
                     int round = 0;
                     p("start dfs");
-                    dfs(gw, g, v, round, level, free, matching, v);
+                    dfs(gw, g, v, round, level, free, matching, v, current_matching);
                     p("end dfs");
                     control_wait(WAIT);
                 }

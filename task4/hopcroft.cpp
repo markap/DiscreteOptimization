@@ -42,11 +42,11 @@ using leda::node_partition;
 using std::numeric_limits;
 
 
-// @todo dfs rückwärtskante
 // @todo länge des pfades
+// @todo early termination
 
 
-int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node_array<int> &free, edge_array<int> &matching) {
+int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node_array<int> &free, edge_array<int> &matching, node &parent) {
 
     int next_round = round + 1;
 
@@ -57,12 +57,16 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
 
     edge e;
     forall_inout_edges(e, v) {
+        node opposite_node = g.opposite(v, e);
+        if (opposite_node == parent) {
+            p("dont check parent");
+            continue;
+        }
         gw.set_color(e, green);
         control_wait(WAIT);
 
         if ((round % 2) == 0) {
             if (matching[e] == 0) { // unmatched
-                node opposite_node = g.opposite(v, e);
                 if (level[opposite_node] == level[v] + 1) { // level must be greater 1
 
                     gw.set_color(e, blue);
@@ -93,7 +97,7 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
                         control_wait(WAIT);
                         return 1;
                     } else {
-                        invert = dfs(gw, g, opposite_node, next_round, level, free, matching);
+                        invert = dfs(gw, g, opposite_node, next_round, level, free, matching, v);
                         if (invert == 1) {
                             if (matching[e] == 0) {
                                 free[opposite_node] = 0;
@@ -119,14 +123,13 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
             }
         } else {
             if (matching[e] == 1) { // matched
-                node opposite_node = g.opposite(v, e);
                 if (level[opposite_node] == level[v] + 1) { // level must be greater 1
 
                     gw.set_color(e, blue);
                     gw.set_color(opposite_node, blue);
                     control_wait(WAIT);
 
-                    invert = dfs(gw, g, opposite_node, next_round, level, free, matching); }
+                    invert = dfs(gw, g, opposite_node, next_round, level, free, matching, v); }
                     if (invert == 1) {
                         if (matching[e] == 0) {
                             free[opposite_node] = 0;
@@ -317,7 +320,7 @@ void hopcroft(graph &g, GraphWin &gw) {
                 if (free[v] == 1) {
                     int round = 0;
                     p("start dfs");
-                    dfs(gw, g, v, round, level, free, matching);
+                    dfs(gw, g, v, round, level, free, matching, v);
                     p("end dfs");
                     control_wait(WAIT);
                 }
@@ -508,7 +511,6 @@ int main(int argc, char *argv[]) {
     forall_edges(e, g)
         gw.set_color(e, yellow);
 
-    node_array<int> dfsnum(g, -1);
 
     hopcroft(g, gw);
 

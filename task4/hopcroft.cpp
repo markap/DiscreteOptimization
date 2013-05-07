@@ -5,6 +5,7 @@
 // already handled edges with longer paths are marked in green
 // possible cycles are marked in orange
 #include <iostream>
+#include <math.h>
 #include <climits>
 #include <LEDA/graphics/graphwin.h>
 #include <LEDA/graphics/color.h>
@@ -17,7 +18,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 2
+#define WAIT 0.7
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -32,6 +33,8 @@ using leda::blue;
 using leda::orange;
 using leda::green;
 using leda::yellow;
+using leda::black;
+using leda::violet;
 using leda::string;
 using leda::queue;
 using leda::list;
@@ -42,8 +45,14 @@ using leda::node_partition;
 using std::numeric_limits;
 
 
-// @todo länge des pfades
 // @todo early termination
+
+double upper_bound(int maximum_matching, int current_matching) {
+
+    double x = current_matching / (maximum_matching - current_matching);
+    double y = floor(x);
+    return (2 * y) + 1;
+}
 
 
 int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node_array<int> &free, edge_array<int> &matching, node &parent, int &current_matching) {
@@ -175,6 +184,7 @@ void hopcroft(graph &g, GraphWin &gw) {
     edge_array<int> matching(g, 0);
     node_array<int> free(g, 1);
     node_array<edge> bfs_edge_to_node(g, NULL);
+    node_array<node> bfs_from(g, NULL);
 
     queue<node> fifo_queue;
 
@@ -196,6 +206,7 @@ void hopcroft(graph &g, GraphWin &gw) {
 
     int maximum_matching = nodes_count / 2;
     int current_matching = 0;
+    int upper_b;
 
     control_wait(WAIT);
     int set_index = 0;
@@ -207,17 +218,25 @@ void hopcroft(graph &g, GraphWin &gw) {
             p(maximum_matching);
             p("current");
             p(current_matching);
-            gw.acknowledge("BFS init");
+            if (maximum_matching == current_matching) {
+                p("early termination");
+                break;
+            }
+            upper_b = upper_bound(maximum_matching, current_matching);
+            gw.message(string("upper bound: %d - BFS", upper_b));
+
             level.use_node_data(g, -1);
+            bfs_from.use_node_data(g, NULL);
+            bfs_from.use_node_data(g, NULL);
 
             // just for animation
             forall_nodes(n, g) {
-                gw.set_color(n, yellow);
+                gw.set_color(n, orange);
                 gw.set_user_label(n, string("%d", level[n]));
             }
             edge ed;
             forall_edges(ed, g) {
-                gw.set_color(ed, yellow);
+                gw.set_color(ed, black);
             }
             control_wait(WAIT);
 
@@ -247,13 +266,19 @@ void hopcroft(graph &g, GraphWin &gw) {
             edge e;
             forall_inout_edges(e, current_node) {
                 p("und die nächste edge");
+
+                node opposite_node = g.opposite(current_node, e); 
+                if (bfs_from[current_node] == opposite_node) {
+                    p("dont check parent");
+                    continue;
+                }
+
                 gw.set_color(e, green);
                 control_wait(WAIT);
                 if ((set_index % 2) == 0) { // nodes out of v_set_1
                     p("d 1");
                     if (matching[e] == 0) {  // edge is unmatched
                     p("d 2");
-                        node opposite_node = g.opposite(current_node, e); 
                         if (level[opposite_node] == -1) {
                             p("d3");
                             level[opposite_node] = level[current_node] + 1;
@@ -263,6 +288,7 @@ void hopcroft(graph &g, GraphWin &gw) {
                             gw.set_color(opposite_node, red);
                             gw.set_color(e, red);
                             bfs_edge_to_node[opposite_node] = e;
+                            bfs_from[opposite_node] = current_node;
                             control_wait(WAIT);
 
                             if (free[opposite_node] == 1) {
@@ -276,7 +302,6 @@ void hopcroft(graph &g, GraphWin &gw) {
                     p(" e 1");
                     if (matching[e] == 1) {  // edge is matched
                         p("e 2");
-                        node opposite_node = g.opposite(current_node, e); 
                         if (level[opposite_node] == -1) {
                             p("e 3");
 
@@ -286,6 +311,7 @@ void hopcroft(graph &g, GraphWin &gw) {
                             gw.set_user_label(opposite_node,string("%d", level[opposite_node]));
                             gw.set_color(opposite_node, red);
                             bfs_edge_to_node[opposite_node] = e;
+                            bfs_from[opposite_node] = current_node;
                             gw.set_color(e, red);
                             control_wait(WAIT);
 
@@ -311,16 +337,16 @@ void hopcroft(graph &g, GraphWin &gw) {
 
         if (free_v2_elem_in_list == 1) {
             p("dfs");
-            gw.acknowledge("search for free nodes in v1");
+            gw.message(string("upper bound: %d - DFS", upper_b));
 
 
             // just for animation
             forall_nodes(n, g) {
-                gw.set_color(n, yellow);
+                gw.set_color(n, orange);
             }
             edge ed;
             forall_edges(ed, g) {
-                gw.set_color(ed, yellow);
+                gw.set_color(ed, black);
             }
             control_wait(WAIT);
 
@@ -345,142 +371,22 @@ void hopcroft(graph &g, GraphWin &gw) {
 
     }
 
-    
+    // animate the matching edges in one color
+    edge edg;
+    forall_edges(edg, g) {
 
+        if (matching[edg] == 1) {
+            gw.set_color(edg, violet);
 
-
-
-
-
-
-/**
-    queue<node> fifo_queue; 
-
-    node_array<node> from(g, NULL);
-
-    node_array<int> node_in_queue(g, 0);
-    node_array<edge> edge_for_node(g);
-
-    // a distance array with relation: node -> infinity
-    node_array<double> distance(g, numeric_limits<double>::infinity());
-
-    // the from chain to allow early detection
-    node_array<node_map<int> > from_chain(g);
-    node v;
-    forall(v, g.all_nodes()) {
-        node_map<int> tmp(g);
-        from_chain[v] = tmp;
-    }
-        
-
-
-    // get the edge weight from the user label
-    edge_array<double> edge_weight(g);
-
-    edge e;
-    forall_edges(e, g) { 
-        string s = gw.get_user_label(e);
-        leda::string_istream I(s);
-        I >> edge_weight[e];
-    }
-
-    
-    // handle the start node
-    distance[start_node] = 0;
-    gw.set_user_label(start_node, string("%.1f", +0.0));
-    fifo_queue.append(start_node);
-    node_in_queue[start_node] = 1;
-
-    gw.set_color(start_node, red);
-    control_wait(WAIT);
-
-    int current_queue_size;
-    int node_length = g.all_nodes().length();
-    p(node_length);
-    // the outer loop loops n-1 times
-    for (int i = 1; i < node_length; i++) {
-
-        gw.message(string("Phase %d", i));
-        current_queue_size = fifo_queue.size();
-        // early termination
-        if (current_queue_size == 0) {
-            p("queue is empty!");
-            break;
-        }
-        // loop through all elements of fifo_queue at the beginning of while loop
-        int j = 0;
-        while (j < current_queue_size && !fifo_queue.empty()) {
-            j++;
-        
-            node current_node = fifo_queue.pop();
-            node_in_queue[current_node] = 0;
-            gw.set_color(current_node, green); 
-
-
-
-            control_wait(WAIT);
-
-            // check all the outgoing edges
-            edge e;
-            forall_out_edges(e, current_node) {
-            
-                node n = g.opposite(current_node, e);
-
-                double d = distance[current_node] + edge_weight[e];
-                if (d < distance[n]) { // update if distance is smaller
-                    if (edge_for_node[n] != NULL) {
-                        gw.set_color(edge_for_node[n], green);
-                    }
-                    edge_for_node[n] = e;
-                    distance[n] = d;
-                    from[n] = current_node;
-
-                    // check for early termination
-                    node_map<int> from_map = from_chain[current_node];
-                    if (from_map[n] == 1) {
-                        p("early termination");
-                        mark_cycle(gw, g, n, from, edge_for_node);
-                        return;
-                    }
-                    // add node to the from_chain
-                    from_map[current_node] = 1;
-                    from_chain[n] = from_map;
-
-                    // add node only if not already in queue
-                    if (node_in_queue[n] == 0) {
-                        fifo_queue.append(n);
-                        node_in_queue[n] = 1;
-                        gw.set_color(n, red);
-
-                    }
-
-
-                    gw.set_color(e, red);
-                    gw.set_user_label(n, string("%.1f", d));
-                    control_wait(WAIT);
-                
-                } else { // no smaller distance
-                    gw.set_color(e, green);
-                }
-
-            }
-
-            // node is done: mark it blue
-            gw.set_color(current_node, blue);
-            if (edge_for_node[current_node] != NULL) {
-                gw.set_color(edge_for_node[current_node], blue);
-            }
-            control_wait(WAIT);
         }
     }
 
-    // if fifo_queue is not empty after n-1 rounds, there is a cycle
-    if (!fifo_queue.empty()) {
-        node n = fifo_queue.pop();
-        mark_cycle(gw, g, n, from, edge_for_node);
+    node no;
+    forall_nodes(no, g) {
+        gw.set_color(no, violet);
     }
+    
 
-*/
 }
 
 

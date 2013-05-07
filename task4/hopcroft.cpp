@@ -17,7 +17,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0 
+#define WAIT 2
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -42,6 +42,10 @@ using leda::node_partition;
 using std::numeric_limits;
 
 
+// @todo dfs rückwärtskante
+// @todo länge des pfades
+
+
 int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node_array<int> &free, edge_array<int> &matching) {
 
     int next_round = round + 1;
@@ -49,31 +53,44 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
     int invert;
 
     gw.set_color(v, blue);
+    control_wait(WAIT);
 
     edge e;
     forall_inout_edges(e, v) {
+        gw.set_color(e, green);
+        control_wait(WAIT);
+
         if ((round % 2) == 0) {
             if (matching[e] == 0) { // unmatched
                 node opposite_node = g.opposite(v, e);
                 if (level[opposite_node] == level[v] + 1) { // level must be greater 1
+
+                    gw.set_color(e, blue);
+                    gw.set_color(opposite_node, blue);
+                    control_wait(WAIT);
+
                     if (free[opposite_node] == 1) {
                         level[opposite_node] = -1;
                         gw.set_color(opposite_node, blue);
                         gw.set_user_label(opposite_node, string("%d", level[opposite_node]));
-                        control_wait(WAIT);
+
+                        level[v] = -1;
+                        gw.set_user_label(v, string("%d", level[v]));
+                        
                         // invertiere
                         if (matching[e] == 0) {
                             gw.set_color(e, blue);
                             free[opposite_node] = 0;
-                            gw.set_border_width(opposite_node, 2);
+                            gw.set_border_width(opposite_node, 1);
                             free[v] = 0;
-                            gw.set_width(e, 5);
-                            gw.set_border_width(v, 2);
+                            gw.set_width(e, 10);
+                            gw.set_border_width(v, 1);
                             matching[e] = 1;
                         } else {
                             matching[e] = 0; 
                             gw.set_width(e, 2);
                         }
+                        control_wait(WAIT);
                         return 1;
                     } else {
                         invert = dfs(gw, g, opposite_node, next_round, level, free, matching);
@@ -81,17 +98,18 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
                             if (matching[e] == 0) {
                                 free[opposite_node] = 0;
 
-                                gw.set_border_width(opposite_node, 2);
-                                gw.set_width(e, 5);
+                                gw.set_border_width(opposite_node, 1);
+                                gw.set_width(e, 10);
                                 free[v] = 0;
-                                gw.set_border_width(v, 2);
+                                gw.set_border_width(v, 1);
                                 matching[e] = 1;
                             } else {
-                                gw.set_width(e, 2);
+                                gw.set_width(e, 1);
                                 matching[e] = 0; 
                             }
                             level[v] = -1;
                             gw.set_user_label(v, string("%d", level[v]));
+                            control_wait(WAIT);
                             return 1;
    
                         }
@@ -103,25 +121,31 @@ int dfs(GraphWin &gw, graph &g, node &v, int round, node_array<int> &level, node
             if (matching[e] == 1) { // matched
                 node opposite_node = g.opposite(v, e);
                 if (level[opposite_node] == level[v] + 1) { // level must be greater 1
-                     invert = dfs(gw, g, opposite_node, next_round, level, free, matching); }
-                     if (invert == 1) {
-                         if (matching[e] == 0) {
-                             free[opposite_node] = 0;
 
-                             gw.set_border_width(opposite_node, 10);
-                             free[v] = 0;
-                             gw.set_border_width(v, 10);
-                             gw.set_width(e, 5);
-                             matching[e] = 1;
-                         } else {
-                             matching[e] = 0; 
-                             gw.set_width(e, 2);
-                         }
-                         level[v] = -1;
-                         gw.set_user_label(v, string("%d", level[v]));
-                         return 1;
+                    gw.set_color(e, blue);
+                    gw.set_color(opposite_node, blue);
+                    control_wait(WAIT);
+
+                    invert = dfs(gw, g, opposite_node, next_round, level, free, matching); }
+                    if (invert == 1) {
+                        if (matching[e] == 0) {
+                            free[opposite_node] = 0;
+
+                            gw.set_border_width(opposite_node, 5);
+                            free[v] = 0;
+                            gw.set_border_width(v, 10);
+                            gw.set_width(e, 5);
+                            matching[e] = 1;
+                        } else {
+                            matching[e] = 0; 
+                            gw.set_width(e, 1);
+                        }
+                        level[v] = -1;
+                        gw.set_user_label(v, string("%d", level[v]));
+                        control_wait(WAIT);
+                        return 1;
    
-                     }
+                 } 
             }
 
         }
@@ -141,9 +165,11 @@ void hopcroft(graph &g, GraphWin &gw) {
     node_array<int> level(g, -1);
     edge_array<int> matching(g, 0);
     node_array<int> free(g, 1);
+    node_array<edge> bfs_edge_to_node(g, NULL);
 
     queue<node> fifo_queue;
 
+    int nodes_count = 0;
 
     node n;
     forall_nodes(n, g) { 
@@ -156,7 +182,11 @@ void hopcroft(graph &g, GraphWin &gw) {
 
         gw.set_user_label(n, string("-1"));
         gw.set_border_width(n, 5);
+        nodes_count++;
     }
+
+    int maximum_matching = nodes_count / 2;
+    int current_matching = 0;
 
     control_wait(WAIT);
     int set_index = 0;
@@ -164,15 +194,30 @@ void hopcroft(graph &g, GraphWin &gw) {
     while (true) {
 
         if (fifo_queue.empty()) {
+            gw.acknowledge("BFS init");
             level.use_node_data(g, -1);
+
+            // just for animation
+            forall_nodes(n, g) {
+                gw.set_color(n, yellow);
+                gw.set_user_label(n, string("%d", level[n]));
+            }
+            edge ed;
+            forall_edges(ed, g) {
+                gw.set_color(ed, yellow);
+            }
+            control_wait(WAIT);
+
+
             forall(n, v_set_1) {
                 if (free[n] == 1) {
                     fifo_queue.append(n);
                     level[n] = 0;
                     gw.set_user_label(n, string("0"));
-                    control_wait(WAIT);
+                    gw.set_color(n, red);
                 }
             }
+            control_wait(WAIT);
         }
 
 
@@ -181,7 +226,7 @@ void hopcroft(graph &g, GraphWin &gw) {
         for (int i = 0; i < fifo_queue_length; i++) {
 
             node current_node = fifo_queue.pop();
-            gw.set_color(current_node, red);
+            gw.set_color(current_node, green);
             p("neuer knoten");
             control_wait(WAIT);
 
@@ -204,6 +249,7 @@ void hopcroft(graph &g, GraphWin &gw) {
                             gw.set_user_label(opposite_node, string("%d", level[opposite_node]));
                             gw.set_color(opposite_node, red);
                             gw.set_color(e, red);
+                            bfs_edge_to_node[opposite_node] = e;
                             control_wait(WAIT);
 
                             if (free[opposite_node] == 1) {
@@ -215,7 +261,6 @@ void hopcroft(graph &g, GraphWin &gw) {
 
                 } else { // nodes out of v_set_2
                     p(" e 1");
-                    gw.set_color(current_node, orange);
                     if (matching[e] == 1) {  // edge is matched
                         p("e 2");
                         node opposite_node = g.opposite(current_node, e); 
@@ -227,6 +272,7 @@ void hopcroft(graph &g, GraphWin &gw) {
 
                             gw.set_user_label(opposite_node,string("%d", level[opposite_node]));
                             gw.set_color(opposite_node, red);
+                            bfs_edge_to_node[opposite_node] = e;
                             gw.set_color(e, red);
                             control_wait(WAIT);
 
@@ -235,6 +281,12 @@ void hopcroft(graph &g, GraphWin &gw) {
 
                 }
             }
+
+            gw.set_color(current_node, blue);
+            if (bfs_edge_to_node[current_node] != NULL) {
+                gw.set_color(bfs_edge_to_node[current_node], blue);
+            }
+            control_wait(WAIT);
 
         }
         set_index++;
@@ -246,6 +298,20 @@ void hopcroft(graph &g, GraphWin &gw) {
 
         if (free_v2_elem_in_list == 1) {
             p("dfs");
+            gw.acknowledge("search for free nodes in v1");
+
+
+            // just for animation
+            forall_nodes(n, g) {
+                gw.set_color(n, yellow);
+            }
+            edge ed;
+            forall_edges(ed, g) {
+                gw.set_color(ed, yellow);
+            }
+            control_wait(WAIT);
+
+
             node v;
             forall(v, v_set_1) {
                 if (free[v] == 1) {

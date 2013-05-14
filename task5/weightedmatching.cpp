@@ -14,7 +14,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0.7 
+#define WAIT 0
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -44,7 +44,7 @@ using std::numeric_limits;
 using leda::gw_edge_dir;
 
 
-int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_array<double> &edge_weight, edge_array<int> &matching) {
+int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_array<double> &edge_weight, edge_array<int> &matching, edge_array<double> &inmutual_weight, double &weight_count) {
 
 
     node_pq<double> prio_queue(g); // priority queue for nodes
@@ -150,9 +150,17 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
         if (matching[next_edge] == 0) {
             matching[next_edge] = 1;
             gw.set_width(next_edge, 10);    
+
+            p("add w");
+            p(inmutual_weight[next_edge]);
+            weight_count += inmutual_weight[next_edge];
         } else {
             matching[next_edge] = 0;
             gw.set_width(next_edge, 1);
+
+            weight_count -= inmutual_weight[next_edge];
+            p("remove w");
+            p(inmutual_weight[next_edge]);
         }
         control_wait(WAIT);
     }
@@ -160,7 +168,6 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
     gw.del_edge(from_edge[target_node]);
     gw.del_edge(from_edge[last_node]);
 
-    gw.acknowledge("update costs");
     edge ed;
     forall_edges(ed, g) {
         if (in_path[ed] == 0) {
@@ -252,7 +259,8 @@ void weightedmatching(graph &g, GraphWin &gw) {
         gw.set_direction(e, leda::directed_edge);
     }
 
-    gw.acknowledge("add const");
+    edge_array<double> inmutual_weight = edge_weight;
+
 
     if (min_weight < 0) {
         forall_edges(e, g) {
@@ -265,12 +273,16 @@ void weightedmatching(graph &g, GraphWin &gw) {
 
 
     edge_array<int> matching(g, 0);
+    double weight_count = 0;
 
     p("out nodes");
     p(g.outdeg(source_node));
     while (1) {
-        gw.acknowledge("dijstra");
-        int done = dijkstra(g, gw, source_node, target_node, edge_weight, matching);
+        int done = dijkstra(g, gw, source_node, target_node, edge_weight, matching, inmutual_weight, weight_count);
+
+        p("weight_count");
+        p(weight_count);
+        gw.message(string("weight is %.1f", weight_count));
         if (done == 0) {
             break;
         }

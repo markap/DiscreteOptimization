@@ -99,7 +99,6 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
                 p(edge_weight[e]);
                 p(d);
                 gw.set_user_label(n, string("%.0f", d)); // show current distance in node visible for user during runtime
-                gw.set_color(n, orange);
                 gw.redraw();
                 control_wait(WAIT);
                 

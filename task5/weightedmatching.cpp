@@ -239,10 +239,12 @@ void weightedmatching(graph &g, GraphWin &gw) {
         nodes_count++;
     }
 
-    point p_start((v1_max + v1_min) / 2, v1_height + 1.7);
+    point p_start((v1_max + v1_min) / 2, v1_height + 5);
     gw.set_position(source_node, p_start);
-    point p_target((v2_max + v2_min) / 2, v2_height - 1.7);
+    point p_target((v2_max + v2_min) / 2, v2_height - 5);
     gw.set_position(target_node, p_target);
+
+    gw.zoom_graph();
 
 
 
@@ -314,10 +316,6 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    // Jetzt deklarieren wir ein Feld, das jedem Knoten eine Nummer zuordnet,
-    // und initialisieren es mit "-1"
-    node_array<int> bfsnum(g, -1);
-
 
     // Nun zeigen wir fuer alle Knoten den bfsnum-Wert als User-Label an
     // sowie initialisieren den Graphen gelb.
@@ -327,8 +325,9 @@ int main(int argc, char *argv[]) {
         gw.set_color(v, yellow);
     }
     edge e;
-    forall_edges(e, g)
+    forall_edges(e, g) {
         gw.set_color(e, yellow);
+    }
 
 
     weightedmatching(g, gw);

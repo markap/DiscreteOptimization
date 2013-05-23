@@ -303,8 +303,10 @@ int main(int argc, char *argv[]) {
     gw.display(); // Display window on the screen
     create_control(); // Display control window
     gw.set_directed(true); // use undirected graph presentation
-    if (argc > 1)    // falls Name als Parameter, Graph laden
+    if (argc > 1) {    // falls Name als Parameter, Graph laden
         gw.read(argv[1]);
+    }
+
 
     gw.edit();   // switch to edit mode until user presses 'done'
 
@@ -315,6 +317,11 @@ int main(int argc, char *argv[]) {
         gw.close(); destroy_control();
         exit(1);
     }
+
+    GraphWin gw2(g, 800, 600);
+    gw2.display();
+    gw2.redraw();
+    gw2.edit();
 
 
     // Nun zeigen wir fuer alle Knoten den bfsnum-Wert als User-Label an

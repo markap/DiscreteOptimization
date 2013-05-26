@@ -15,7 +15,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 3
+#define WAIT 0
 
 int max = 1;
 
@@ -45,7 +45,9 @@ using leda::edge_array;
 using leda::node_partition;
 using std::numeric_limits;
 using leda::gw_edge_dir;
-
+using leda::gw_font_type;
+using leda::roman_font;
+using leda::bold_font;
 
 int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_array<double> &edge_weight, edge_array<int> &matching, edge_array<double> &inmutual_weight, double &weight_count, GraphWin &gw2, node_array<node> &gw2_nodes, edge_map<edge> &gw2_edges) {
 
@@ -56,22 +58,26 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
     node_array<edge> from_edge(g);  // from Edge-Array to store the parent edge of each node; can be updated dynamically
 
     node_array<double> distance(g, -1); // Distance double-Array to store the current shortest distance to a particular node; default value -1
+    if (max == 1) {
 
-    edge_map<double> new_edge_weight(g, 0);
+        edge_map<double> new_edge_weight(g, 0);
+    
 
-    edge ex;
-    double min_weight = numeric_limits<double>::infinity();
-    forall_edges(ex, g) {
-        double new_weight = edge_weight[ex] * -1;
-        new_edge_weight[ex] = new_weight;
+        edge ex;
+        double min_weight = numeric_limits<double>::infinity();
+        forall_edges(ex, g) {
+            double new_weight = edge_weight[ex] * -1;
+            edge_weight[ex] = new_weight;
 
-        if (new_weight < min_weight) {
-            min_weight = new_weight;
+            if (new_weight < min_weight) {
+                min_weight = new_weight;
+            }
         }
-    }
 
-    forall_edges(ex, g) {
-        new_edge_weight[ex] = new_edge_weight[ex] - min_weight;
+        forall_edges(ex, g) {
+            edge_weight[ex] = edge_weight[ex] - min_weight;
+        }
+        max = 0;
     }
         
 
@@ -104,7 +110,7 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
             
             node n = g.opposite(current_node, e);
 
-            double d = distance[current_node] + new_edge_weight[e]; // calculate distance from current node
+            double d = distance[current_node] + edge_weight[e]; // calculate distance from current node
             if (distance[n] == -1) { // if node has not been inserted into priority queue yet, insert it
                 //insert
                 p("insert");
@@ -170,6 +176,8 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
             matching[next_edge] = 1;
             if (gw2_edges[next_edge] != NULL) {
                 gw2.set_width(gw2_edges[next_edge], 10);
+                gw2.set_user_label(next_edge, string("%s", gw2.get_user_label(next_edge)));
+                gw2.redraw();
             } 
 
             p("add w");
@@ -179,6 +187,7 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
             matching[next_edge] = 0;
             if (gw2_edges[next_edge] != NULL) {
                 gw2.set_width(gw2_edges[next_edge], 1);
+                gw2.set_user_label(next_edge, string("%s", gw2.get_user_label(next_edge)));
             }
 
             weight_count -= inmutual_weight[next_edge];
@@ -312,6 +321,15 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
         gw.message(string("weight is %.1f", weight_count));
         gw2.message(string("weight is %.1f", weight_count));
         if (done == 0) {
+
+            edge edx;
+            p("sum is");
+            forall_edges(edx, g) {
+                if (matching[edx] == 1) {
+                    p(gw2.get_user_label(edx));
+                }
+            }
+    
             break;
         }
     }

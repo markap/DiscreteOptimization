@@ -389,6 +389,7 @@ int main(int argc, char *argv[]) {
     forall_nodes(v, g) {
         gw.set_label_type(v, user_label);    // User-Label anzeigen (statt Index-Label)
         gw.set_color(v, yellow);
+        gw.set_user_label(v, string("-1"));
 
         node n = gw2.new_node(gw.get_position(v));
         gw2.set_label_type(n, user_label);    

@@ -15,7 +15,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0
+#define WAIT 3
 
 int max = 1;
 
@@ -56,6 +56,23 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
     node_array<edge> from_edge(g);  // from Edge-Array to store the parent edge of each node; can be updated dynamically
 
     node_array<double> distance(g, -1); // Distance double-Array to store the current shortest distance to a particular node; default value -1
+
+    edge_map<double> new_edge_weight(g, 0);
+
+    edge ex;
+    double min_weight = numeric_limits<double>::infinity();
+    forall_edges(ex, g) {
+        double new_weight = edge_weight[ex] * -1;
+        new_edge_weight[ex] = new_weight;
+
+        if (new_weight < min_weight) {
+            min_weight = new_weight;
+        }
+    }
+
+    forall_edges(ex, g) {
+        new_edge_weight[ex] = new_edge_weight[ex] - min_weight;
+    }
         
 
     
@@ -87,7 +104,7 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
             
             node n = g.opposite(current_node, e);
 
-            double d = distance[current_node] + edge_weight[e]; // calculate distance from current node
+            double d = distance[current_node] + new_edge_weight[e]; // calculate distance from current node
             if (distance[n] == -1) { // if node has not been inserted into priority queue yet, insert it
                 //insert
                 p("insert");

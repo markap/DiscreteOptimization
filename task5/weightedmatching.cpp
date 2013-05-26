@@ -17,6 +17,8 @@
 
 #define WAIT 0
 
+int max = 1;
+
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
 using leda::graph;
@@ -45,7 +47,7 @@ using std::numeric_limits;
 using leda::gw_edge_dir;
 
 
-int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_array<double> &edge_weight, edge_array<int> &matching, edge_array<double> &inmutual_weight, double &weight_count) {
+int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_array<double> &edge_weight, edge_array<int> &matching, edge_array<double> &inmutual_weight, double &weight_count, GraphWin &gw2, node_array<node> &gw2_nodes, edge_map<edge> &gw2_edges) {
 
 
     node_pq<double> prio_queue(g); // priority queue for nodes
@@ -149,14 +151,18 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
 
         if (matching[next_edge] == 0) {
             matching[next_edge] = 1;
-            gw.set_width(next_edge, 10);    
+            if (gw2_edges[next_edge] != NULL) {
+                gw2.set_width(gw2_edges[next_edge], 10);
+            } 
 
             p("add w");
             p(inmutual_weight[next_edge]);
             weight_count += inmutual_weight[next_edge];
         } else {
             matching[next_edge] = 0;
-            gw.set_width(next_edge, 1);
+            if (gw2_edges[next_edge] != NULL) {
+                gw2.set_width(gw2_edges[next_edge], 1);
+            }
 
             weight_count -= inmutual_weight[next_edge];
             p("remove w");
@@ -187,7 +193,7 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
 
 
 
-void weightedmatching(graph &g, GraphWin &gw) {
+void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &gw2_nodes, edge_map<edge> &gw2_edges) {
 
     list<node> v_set_1; // vertex set 1
     list<node> v_set_2; // vertex set 2
@@ -225,6 +231,7 @@ void weightedmatching(graph &g, GraphWin &gw) {
             v_set_1.append(n); 
             e = gw.new_edge(source_node, n);
             edge_weight[e] = 0.0;
+            gw2_edges[e] = NULL;
             gw.set_user_label(e, string("%.1f", edge_weight[e]));
 
         } else if (s == string("2")) {
@@ -234,6 +241,7 @@ void weightedmatching(graph &g, GraphWin &gw) {
             v_set_2.append(n);
             e = gw.new_edge(n, target_node);
             edge_weight[e] = 0.0;
+            gw2_edges[e] = NULL;
             gw.set_user_label(e, string("%.1f", edge_weight[e]));
         }
 
@@ -280,30 +288,42 @@ void weightedmatching(graph &g, GraphWin &gw) {
     p("out nodes");
     p(g.outdeg(source_node));
     while (1) {
-        int done = dijkstra(g, gw, source_node, target_node, edge_weight, matching, inmutual_weight, weight_count);
+        int done = dijkstra(g, gw, source_node, target_node, edge_weight, matching, inmutual_weight, weight_count, gw2, gw2_nodes, gw2_edges);
 
         p("weight_count");
         p(weight_count);
         gw.message(string("weight is %.1f", weight_count));
+        gw2.message(string("weight is %.1f", weight_count));
         if (done == 0) {
             break;
         }
     }
+}
 
+void changeToMax(GraphWin &gw) {
+    max = 1;
+}
 
-    gw.acknowledge("end m");
-
+void changeToMin(GraphWin &gw) {
+    max = 0;
 }
 
 
-    // Main program
+
+// Main program
 int main(int argc, char *argv[]) {
-    p("los gehts");
+
+
     // Create window for illustrating the graph with size 800 x 600 
     GraphWin gw(800, 600);
     gw.display(); // Display window on the screen
     create_control(); // Display control window
     gw.set_directed(true); // use undirected graph presentation
+
+    gw.add_separator(24);
+    gw.add_simple_call(changeToMax, string("Max"), 24);
+    gw.add_simple_call(changeToMin, string("Min"), 24);
+
     if (argc > 1) {    // falls Name als Parameter, Graph laden
         gw.read(argv[1]);
     }
@@ -329,6 +349,7 @@ int main(int argc, char *argv[]) {
     // Nun zeigen wir fuer alle Knoten den bfsnum-Wert als User-Label an
     // sowie initialisieren den Graphen gelb.
     node_array<node> gw2_nodes(g);
+    edge_map<edge> gw2_edges(g);
     node v;
     forall_nodes(v, g) {
         gw.set_label_type(v, user_label);    // User-Label anzeigen (statt Index-Label)
@@ -338,7 +359,8 @@ int main(int argc, char *argv[]) {
         gw2.set_label_type(n, user_label);    
         gw2.set_width(n, gw.get_width(v));
         gw2.set_height(n, gw.get_height(v));
-        gw2.set_color(n, blue);
+        gw2.set_color(n, violet);
+        gw2.set_user_label(n, string("%s", gw.get_user_label(v)));
         gw2_nodes[v] = n;
 
     }
@@ -346,22 +368,34 @@ int main(int argc, char *argv[]) {
     gw2.redraw();
     gw2.set_zoom_objects(false);
     gw2.zoom_graph();
+    gw2.set_directed(false);
 
 
 
     edge e;
     forall_edges(e, g) {
         gw.set_color(e, yellow);
+
+        node source = g.source(e);
+        node target = g.target(e);
+
+        edge new_edge = gw2.new_edge(gw2_nodes[source], gw2_nodes[target]);
+        gw2.set_width(new_edge, 1);
+        gw2.set_color(new_edge, violet);
+        gw2.set_user_label(new_edge, string("%s", gw.get_user_label(e)));
+
+        gw2_edges[e] = new_edge;
     }
 
 
-    weightedmatching(g, gw);
+    weightedmatching(g, gw, gw2, gw2_nodes, gw2_edges);
 
     gw.acknowledge("Done");
     gw.edit(); // nochmal in den Edit-Modus, zum Anschauen :)
 
     // Aufr�umen und Ende
     gw.close();
+    gw2.close();
     destroy_control();
     exit(0);
 }

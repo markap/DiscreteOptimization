@@ -167,9 +167,9 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
     node next_node = target_node;
     node last_node;
     edge next_edge;
-    //gw.set_color(from[target_node], orange);
-    //gw.set_color(from[from[target_node]], orange);
-    //gw.set_color(from[from[from[target_node]]], orange);
+    gw.set_color(from[target_node], orange);
+    gw.set_color(from[from[target_node]], orange);
+    gw.set_color(from[from[from[target_node]]], orange);
     while ((next_node = from[next_node]) != start_node) {
         next_edge = from_edge[next_node];
         in_path[next_edge] = 1;
@@ -177,7 +177,7 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
         edge_weight[next_edge] = 0;
         gw.set_user_label(next_edge, string("%.1f", edge_weight[next_edge]));
         gw.update_graph();
-        //gw.set_color(next_edge, orange);
+        gw.set_color(next_edge, orange);
 
         last_node = next_node;
 

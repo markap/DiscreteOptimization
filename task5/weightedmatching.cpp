@@ -3,6 +3,7 @@
 #include <math.h>
 #include <climits>
 #include <LEDA/graphics/graphwin.h>
+#include <LEDA/graphics/window.h>
 #include <LEDA/graphics/color.h>
 #include <LEDA/system/basic.h>
 #include <LEDA/core/queue.h>
@@ -318,19 +319,36 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    GraphWin gw2(g, 800, 600);
+    GraphWin gw2(800, 600);
+    gw2.get_window().set_grid_mode(gw.get_window().get_grid_mode());
+    gw2.get_window().set_grid_style(gw.get_window().get_grid_style());
+    gw2.get_window().set_grid_dist(gw.get_window().get_grid_dist());
     gw2.display();
-    gw2.redraw();
-    gw2.edit();
 
 
     // Nun zeigen wir fuer alle Knoten den bfsnum-Wert als User-Label an
     // sowie initialisieren den Graphen gelb.
+    node_array<node> gw2_nodes(g);
     node v;
     forall_nodes(v, g) {
         gw.set_label_type(v, user_label);    // User-Label anzeigen (statt Index-Label)
         gw.set_color(v, yellow);
+
+        node n = gw2.new_node(gw.get_position(v));
+        gw2.set_label_type(n, user_label);    
+        gw2.set_width(n, gw.get_width(v));
+        gw2.set_height(n, gw.get_height(v));
+        gw2.set_color(n, blue);
+        gw2_nodes[v] = n;
+
     }
+
+    gw2.redraw();
+    gw2.set_zoom_objects(false);
+    gw2.zoom_graph();
+
+
+
     edge e;
     forall_edges(e, g) {
         gw.set_color(e, yellow);

@@ -17,7 +17,9 @@
 
 #define WAIT 0
 
-int max = 1;
+int max = 0;
+int transformed = 0;
+int running = 0;
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -51,6 +53,15 @@ using leda::bold_font;
 
 int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_array<double> &edge_weight, edge_array<int> &matching, edge_array<double> &inmutual_weight, double &weight_count, GraphWin &gw2, node_array<node> &gw2_nodes, edge_map<edge> &gw2_edges) {
 
+    node ndx;
+    forall_nodes(ndx, g) {
+        gw.set_color(ndx, yellow);
+    }
+    edge edg;
+    forall_edges(edg, g) {
+        gw.set_color(edg, yellow);
+    }
+
 
     node_pq<double> prio_queue(g); // priority queue for nodes
 
@@ -58,10 +69,8 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
     node_array<edge> from_edge(g);  // from Edge-Array to store the parent edge of each node; can be updated dynamically
 
     node_array<double> distance(g, -1); // Distance double-Array to store the current shortest distance to a particular node; default value -1
-    if (max == 1) {
+    if (transformed == 0 && max == 1) {
 
-        edge_map<double> new_edge_weight(g, 0);
-    
 
         edge ex;
         double min_weight = numeric_limits<double>::infinity();
@@ -77,7 +86,7 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
         forall_edges(ex, g) {
             edge_weight[ex] = edge_weight[ex] - min_weight;
         }
-        max = 0;
+        transformed = 1;
     }
         
 
@@ -158,9 +167,9 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
     node next_node = target_node;
     node last_node;
     edge next_edge;
-    gw.set_color(from[target_node], orange);
-    gw.set_color(from[from[target_node]], orange);
-    gw.set_color(from[from[from[target_node]]], orange);
+    //gw.set_color(from[target_node], orange);
+    //gw.set_color(from[from[target_node]], orange);
+    //gw.set_color(from[from[from[target_node]]], orange);
     while ((next_node = from[next_node]) != start_node) {
         next_edge = from_edge[next_node];
         in_path[next_edge] = 1;
@@ -168,7 +177,7 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
         edge_weight[next_edge] = 0;
         gw.set_user_label(next_edge, string("%.1f", edge_weight[next_edge]));
         gw.update_graph();
-        gw.set_color(next_edge, orange);
+        //gw.set_color(next_edge, orange);
 
         last_node = next_node;
 
@@ -318,8 +327,14 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
 
         p("weight_count");
         p(weight_count);
-        gw.message(string("weight is %.1f", weight_count));
-        gw2.message(string("weight is %.1f", weight_count));
+        if (max == 1) {
+            gw.message(string("maximum weight is %.1f", weight_count));
+            gw2.message(string("maximum weight is %.1f", weight_count));
+        } else if (max == 0) {
+            
+            gw.message(string("minimum weight is %.1f", weight_count));
+            gw2.message(string("minimum weight is %.1f", weight_count));
+        }
         if (done == 0) {
 
             edge edx;
@@ -336,11 +351,17 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
 }
 
 void changeToMax(GraphWin &gw) {
-    max = 1;
+    if (running == 0) {
+        max = 1;
+        gw.message("maximum weight");
+    }
 }
 
 void changeToMin(GraphWin &gw) {
-    max = 0;
+    if (running == 0) {
+        max = 0;
+        gw.message("minimum weight");
+    }
 }
 
 
@@ -349,19 +370,23 @@ void changeToMin(GraphWin &gw) {
 int main(int argc, char *argv[]) {
 
 
+
     // Create window for illustrating the graph with size 800 x 600 
     GraphWin gw(800, 600);
     gw.display(); // Display window on the screen
+    gw.message("minimum weight");
     create_control(); // Display control window
     gw.set_directed(true); // use undirected graph presentation
 
     gw.add_separator(24);
-    gw.add_simple_call(changeToMax, string("Max"), 24);
-    gw.add_simple_call(changeToMin, string("Min"), 24);
+    gw.add_simple_call(changeToMax, string("maximum weight"), 24);
+    gw.add_simple_call(changeToMin, string("minimum weight"), 24);
 
     if (argc > 1) {    // falls Name als Parameter, Graph laden
         gw.read(argv[1]);
     }
+
+    gw.acknowledge("You can switch between min/max weight using the Options Menu - Default is minimum");
 
 
     gw.edit();   // switch to edit mode until user presses 'done'
@@ -423,6 +448,7 @@ int main(int argc, char *argv[]) {
     }
 
 
+    running = 1;
     weightedmatching(g, gw, gw2, gw2_nodes, gw2_edges);
 
     gw.acknowledge("Done");

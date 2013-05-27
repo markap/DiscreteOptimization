@@ -190,7 +190,8 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
     gw.set_color(from[from[target_node]], orange); // Color the predecessor in orange
     gw.set_color(from[from[from[target_node]]], orange);
     while ((next_node = from[next_node]) != start_node) { // loop through the path
-        next_edge = from_edge[next_node]; // + color node in orange??
+        next_edge = from_edge[next_node]; 
+		 gw.set_color(from[from[from[target_node]]], orange);
         in_path[next_edge] = 1;
         g.rev_edge(next_edge);// reverses edge
         edge_weight[next_edge] = 0; // set edge weights on path to 0

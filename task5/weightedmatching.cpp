@@ -70,7 +70,7 @@ using leda::bold_font;
 
 int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_array<double> &edge_weight, edge_array<int> &matching, edge_array<double> &inmutual_weight, double &weight_count, GraphWin &gw2, node_array<node> &gw2_nodes, edge_map<edge> &gw2_edges) {
 
-    //inital node and edge coloring in yellow before each run of dijsktra
+	//inital node and edge coloring in yellow before each run of dijsktra
     node ndx;
     forall_nodes(ndx, g) {
         gw.set_color(ndx, yellow);
@@ -180,7 +180,7 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
         return 0;
     }
 
-    // Reverse the path (!!!!)
+    // Reverse the path 
     edge_array<int> in_path(g, 0); // shortest/longest edge path 
     node next_node = target_node; 
     node last_node;
@@ -192,7 +192,7 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
     while ((next_node = from[next_node]) != start_node) { // loop through the path
         next_edge = from_edge[next_node]; // + color node in orange??
         in_path[next_edge] = 1;
-        g.rev_edge(next_edge);// ?
+        g.rev_edge(next_edge);// reverses edge
         edge_weight[next_edge] = 0; // set edge weights on path to 0
         gw.set_user_label(next_edge, string("%.1f", edge_weight[next_edge])); // Print out the new edge weights as user labels
         gw.update_graph();

@@ -4,15 +4,20 @@ In the "Options" Menu the user can switch between a minimum and maximum searchin
 By default this is set to minimum.
 
 For the illustration of the algorithm two Graphwin windows are used:
-1)The first one depicting the progress of the found matchings in the graph
-2)The second one showing the appliance of dijkstra's algorithm and reversing the minimum/maximum paths
 
-1)Bold edges are matched, while thin edges are unmatched
-
-2) unvisited part is displayed in yellow (default), completed nodes and edges belonging to shortest paths in blue,
-nodes and their corresponding edges in the priority queue in red
+1)The first one showing the appliance of dijkstra's algorithm and inverting the minimum/maximum paths
+ 
+ visited part is displayed in yellow (default), completed nodes and edges belonging to shortest paths in blue,
+ nodes and their corresponding edges in the priority queue in red
  edges which were regarded as minimum/maximum edge but are not after an update anymore are displayed in green
  as well as edges which are not minimum/maximum when you try to add them
+ The shortest/longest path is colored in orange
+
+
+2)The second one depicting the progress of the found matchings in the graph
+Bold edges are matched, while thin edges are unmatched, nodes and edges are colored in purple
+
+
 
 
 */
@@ -68,6 +73,20 @@ using leda::gw_font_type;
 using leda::roman_font;
 using leda::bold_font;
 
+
+// Runs modified dijsktra's algorithm and path invertion
+//// parameter:
+    //   graph g: the graph as reference
+    //   GraphWin gw: the graph windows as reference
+    //   node start_node: the starting node
+    // 	 node target_node: the target node
+    // 	 edge_array edge_weight: contains all edge weights and changes them upon inverting a path
+    // 	 edge_array<int> &matching: contains 0 if edge is unmatched and 1 if edge is matched
+    //	 edge_array<double> &inmutual_weight: contains all origin edge weights to compute weight count
+    // 	 double &weight_count: current weight count
+    //	 GraphWin &gw2: second graphwin window 
+    //	 node_array<node> &gw2_nodes:  mapping nodes from graph to nodes of graph window 2
+    //	 edge_map<edge> &gw2_edges:	mapping edges from graph to edges of graph window 2
 int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_array<double> &edge_weight, edge_array<int> &matching, edge_array<double> &inmutual_weight, double &weight_count, GraphWin &gw2, node_array<node> &gw2_nodes, edge_map<edge> &gw2_edges) {
 
 	//inital node and edge coloring in yellow before each run of dijsktra
@@ -180,7 +199,7 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
         return 0;
     }
 
-    // Reverse the path 
+    // Inverts the path 
     edge_array<int> in_path(g, 0); // shortest/longest edge path 
     node next_node = target_node; 
     node last_node;
@@ -245,7 +264,12 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
     return 1;
 }
 
-
+// Runs weightedmatching algorithm and dijkstra preparation (subtracting least weight from every edge if necessary)
+//// parameter:
+    //   graph g: the graph as reference
+    //   GraphWin gw: the graph windows as reference
+    //	 node_array<node> &gw2_nodes:  mapping nodes from graph to nodes of graph window 2
+    //	 edge_map<edge> &gw2_edges:	mapping edges from graph to edges of graph window 2
 
 
 void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &gw2_nodes, edge_map<edge> &gw2_edges) {

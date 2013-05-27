@@ -32,7 +32,7 @@ nodes and their corresponding edges in the priority queue in red
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0
+#define WAIT 0.7 
 
 int max = 0;
 int transformed = 0;
@@ -186,12 +186,12 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
     node last_node;
     edge next_edge;
 	// Path will be colored in orange
-    gw.set_color(from[target_node], orange); // Depict target node in orange
-    gw.set_color(from[from[target_node]], orange); // Color the predecessor in orange
-    gw.set_color(from[from[from[target_node]]], orange);
+    //gw.set_color(from[target_node], orange); // Depict target node in orange
+    //gw.set_color(from[from[target_node]], orange); // Color the predecessor in orange
+    //gw.set_color(from[from[from[target_node]]], orange);
     while ((next_node = from[next_node]) != start_node) { // loop through the path
         next_edge = from_edge[next_node]; 
-		 gw.set_color(from[from[from[target_node]]], orange);
+		//gw.set_color(from[from[from[target_node]]], orange);
         in_path[next_edge] = 1;
         g.rev_edge(next_edge);// reverses edge
         edge_weight[next_edge] = 0; // set edge weights on path to 0
@@ -409,7 +409,7 @@ int main(int argc, char *argv[]) {
         gw.read(argv[1]);
     }
 
-    gw.acknowledge("You can switch between min/max weight using the Options Menu - Default is minimum");
+    gw.message("You can switch between min/max weight using the Options Menu - Default is minimum");
 
 
     gw.edit();   // switch to edit mode until user presses 'done'

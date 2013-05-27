@@ -1,4 +1,21 @@
+/*Illustration of weightedmatching
 
+In the "Options" Menu the user can switch between a minimum and maximum searching by clicking on "Minimum Weight" or "Maximum weight" respectively before starting the algorithm
+By default this is set to minimum.
+
+For the illustration of the algorithm two Graphwin windows are used:
+1)The first one depicting the progress of the found matchings in the graph
+2)The second one showing the appliance of dijkstra's algorithm and reversing the minimum/maximum paths
+
+1)Bold edges are matched, while thin edges are unmatched
+
+2) unvisited part is displayed in yellow (default), completed nodes and edges belonging to shortest paths in blue,
+nodes and their corresponding edges in the priority queue in red
+ edges which were regarded as minimum/maximum edge but are not after an update anymore are displayed in green
+ as well as edges which are not minimum/maximum when you try to add them
+
+
+*/
 #include <iostream>
 #include <math.h>
 #include <climits>
@@ -53,6 +70,7 @@ using leda::bold_font;
 
 int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_array<double> &edge_weight, edge_array<int> &matching, edge_array<double> &inmutual_weight, double &weight_count, GraphWin &gw2, node_array<node> &gw2_nodes, edge_map<edge> &gw2_edges) {
 
+    //inital node and edge coloring in yellow before each run of dijsktra
     node ndx;
     forall_nodes(ndx, g) {
         gw.set_color(ndx, yellow);
@@ -71,11 +89,11 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
     node_array<double> distance(g, -1); // Distance double-Array to store the current shortest distance to a particular node; default value -1
     if (transformed == 0 && max == 1) {
 
-
+		//Transform all edge weights to obtain exclusively positive edge weights -> Dijsktra is appliccable
         edge ex;
         double min_weight = numeric_limits<double>::infinity();
         forall_edges(ex, g) {
-            double new_weight = edge_weight[ex] * -1;
+            double new_weight = edge_weight[ex] * -1; // multiply all edge weights with -1
             edge_weight[ex] = new_weight;
 
             if (new_weight < min_weight) {
@@ -84,7 +102,7 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
         }
 
         forall_edges(ex, g) {
-            edge_weight[ex] = edge_weight[ex] - min_weight;
+            edge_weight[ex] = edge_weight[ex] - min_weight; // subtract the least edge weight from all edge and thus obtain solely positive edge weights
         }
         transformed = 1;
     }
@@ -162,26 +180,27 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
         return 0;
     }
 
-    
-    edge_array<int> in_path(g, 0);
-    node next_node = target_node;
+    // Reverse the path (!!!!)
+    edge_array<int> in_path(g, 0); // shortest/longest edge path 
+    node next_node = target_node; 
     node last_node;
     edge next_edge;
-    gw.set_color(from[target_node], orange);
-    gw.set_color(from[from[target_node]], orange);
+	// Path will be colored in orange
+    gw.set_color(from[target_node], orange); // Depict target node in orange
+    gw.set_color(from[from[target_node]], orange); // Color the predecessor in orange
     gw.set_color(from[from[from[target_node]]], orange);
-    while ((next_node = from[next_node]) != start_node) {
-        next_edge = from_edge[next_node];
+    while ((next_node = from[next_node]) != start_node) { // loop through the path
+        next_edge = from_edge[next_node]; // + color node in orange??
         in_path[next_edge] = 1;
-        g.rev_edge(next_edge);
-        edge_weight[next_edge] = 0;
-        gw.set_user_label(next_edge, string("%.1f", edge_weight[next_edge]));
+        g.rev_edge(next_edge);// ?
+        edge_weight[next_edge] = 0; // set edge weights on path to 0
+        gw.set_user_label(next_edge, string("%.1f", edge_weight[next_edge])); // Print out the new edge weights as user labels
         gw.update_graph();
         gw.set_color(next_edge, orange);
 
         last_node = next_node;
-
-        if (matching[next_edge] == 0) {
+		//Reverse matchings
+	    if (matching[next_edge] == 0) {
             matching[next_edge] = 1;
             if (gw2_edges[next_edge] != NULL) {
                 gw2.set_width(gw2_edges[next_edge], 10);
@@ -191,7 +210,7 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
 
             p("add w");
             p(inmutual_weight[next_edge]);
-            weight_count += inmutual_weight[next_edge];
+            weight_count += inmutual_weight[next_edge]; //Adjust the weight of current minimum/maximum matching
         } else {
             matching[next_edge] = 0;
             if (gw2_edges[next_edge] != NULL) {
@@ -199,15 +218,15 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
                 gw2.set_user_label(next_edge, string("%s", gw2.get_user_label(next_edge)));
             }
 
-            weight_count -= inmutual_weight[next_edge];
+            weight_count -= inmutual_weight[next_edge];//Adjust the weight of current minimum/maximum matching
             p("remove w");
             p(inmutual_weight[next_edge]);
         }
         control_wait(WAIT);
     }
 
-    gw.del_edge(from_edge[target_node]);
-    gw.del_edge(from_edge[last_node]);
+    gw.del_edge(from_edge[target_node]); // delete last edge on path
+    gw.del_edge(from_edge[last_node]); // delete first edge on path
 
     edge ed;
     forall_edges(ed, g) {
@@ -246,9 +265,12 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
     gw.set_label_type(source_node, user_label);   
     gw.set_label_type(target_node, user_label);  
 
+	
+	// Find node which is on the right (v1_max), and on the left (v1_min) in vertex set 1
     double v1_min = numeric_limits<double>::infinity();
     double v1_max = 0;
     double v1_height;
+	// Find node which is on the right (v2_max), and on the left (v2_min) in vertex set 2
     double v2_min = numeric_limits<double>::infinity();
     double v2_max = 0;
     double v2_height;
@@ -261,11 +283,11 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
         edge e;
         if (s == string("1")) {
             v1_height = p1.ycoord();
-            if (p1.xcoord() > v1_max) v1_max = p1.xcoord();
-            if (p1.xcoord() < v1_min) v1_min = p1.xcoord();
-            v_set_1.append(n); 
-            e = gw.new_edge(source_node, n);
-            edge_weight[e] = 0.0;
+            if (p1.xcoord() > v1_max) v1_max = p1.xcoord(); // x coordinate of current node on the very right in v1
+            if (p1.xcoord() < v1_min) v1_min = p1.xcoord();	// x coordinate of current node on the very left in v1
+            v_set_1.append(n); // append node to vertex set 1
+            e = gw.new_edge(source_node, n);// connect source node with all nodes in v1
+            edge_weight[e] = 0.0; // edge weight on these connections is to be set to 0
             gw2_edges[e] = NULL;
             gw.set_user_label(e, string("%.1f", edge_weight[e]));
 
@@ -274,8 +296,8 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
             if (p1.xcoord() > v2_max) v2_max = p1.xcoord();
             if (p1.xcoord() < v2_min) v2_min = p1.xcoord();
             v_set_2.append(n);
-            e = gw.new_edge(n, target_node);
-            edge_weight[e] = 0.0;
+            e = gw.new_edge(n, target_node); // connect target node with all nodes in v2
+            edge_weight[e] = 0.0;// edge weight on these connections is to be set to 0
             gw2_edges[e] = NULL;
             gw.set_user_label(e, string("%.1f", edge_weight[e]));
         }
@@ -284,11 +306,11 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
     }
 
     point p_start((v1_max + v1_min) / 2, v1_height + 5);
-    gw.set_position(source_node, p_start);
+    gw.set_position(source_node, p_start); // position source node in the middle of all nodes of v1 and slightly on top
     point p_target((v2_max + v2_min) / 2, v2_height - 5);
-    gw.set_position(target_node, p_target);
+    gw.set_position(target_node, p_target);// position target node in the middle of all nodes of v2 and slightly underneath
 
-    gw.zoom_graph();
+    gw.zoom_graph(); // zoom out to assure that all nodes are visible in the graph window
 
 
 
@@ -299,26 +321,26 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
         leda::string_istream I(s);
         I >> edge_weight[e];
 
-        if (edge_weight[e] < min_weight) min_weight = edge_weight[e];
+        if (edge_weight[e] < min_weight) min_weight = edge_weight[e]; // find min weight in all edge
 
-        gw.set_direction(e, leda::directed_edge);
+        gw.set_direction(e, leda::directed_edge); // set edges directed
     }
 
     edge_array<double> inmutual_weight = edge_weight;
 
 
-    if (min_weight < 0) {
+    if (min_weight < 0) { // if one or more edges contain negative edge weights 
         forall_edges(e, g) {
-            edge_weight[e] = edge_weight[e] - min_weight;
+            edge_weight[e] = edge_weight[e] - min_weight; // subtract the least weight
             gw.set_user_label(e, string("%.1f", edge_weight[e]));
         }
     }
-
+	// all edge weights will now be positive and dijkstra appliccable
     gw.redraw();
 
 
-    edge_array<int> matching(g, 0);
-    double weight_count = 0;
+    edge_array<int> matching(g, 0);// matched edges
+    double weight_count = 0; // weight count of current matching with minimum/maximum weight
 
     p("out nodes");
     p(g.outdeg(source_node));
@@ -327,15 +349,15 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
 
         p("weight_count");
         p(weight_count);
-        if (max == 1) {
+        if (max == 1) { // on both graphwin windows print out maximum weight count
             gw.message(string("maximum weight is %.1f", weight_count));
             gw2.message(string("maximum weight is %.1f", weight_count));
-        } else if (max == 0) {
+        } else if (max == 0) {// on both graphwin windows print out minimum weight count
             
             gw.message(string("minimum weight is %.1f", weight_count));
             gw2.message(string("minimum weight is %.1f", weight_count));
         }
-        if (done == 0) {
+        if (done == 0) { // end algorithm
 
             edge edx;
             p("sum is");
@@ -349,7 +371,7 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
         }
     }
 }
-
+// to change between maximum and minimum search before starting the algorithm
 void changeToMax(GraphWin &gw) {
     if (running == 0) {
         max = 1;
@@ -378,9 +400,9 @@ int main(int argc, char *argv[]) {
     create_control(); // Display control window
     gw.set_directed(true); // use undirected graph presentation
 
-    gw.add_separator(24);
-    gw.add_simple_call(changeToMax, string("maximum weight"), 24);
-    gw.add_simple_call(changeToMin, string("minimum weight"), 24);
+    gw.add_separator(24);// add a separator
+    gw.add_simple_call(changeToMax, string("maximum weight"), 24); // implementing option to change to maximum search
+    gw.add_simple_call(changeToMin, string("minimum weight"), 24);// implementing option to change to minimum search
 
     if (argc > 1) {    // falls Name als Parameter, Graph laden
         gw.read(argv[1]);
@@ -398,7 +420,7 @@ int main(int argc, char *argv[]) {
         gw.close(); destroy_control();
         exit(1);
     }
-
+	// Zweites Graphwin window
     GraphWin gw2(800, 600);
     gw2.get_window().set_grid_mode(gw.get_window().get_grid_mode());
     gw2.get_window().set_grid_style(gw.get_window().get_grid_style());
@@ -408,7 +430,8 @@ int main(int argc, char *argv[]) {
 
     // Nun zeigen wir fuer alle Knoten den bfsnum-Wert als User-Label an
     // sowie initialisieren den Graphen gelb.
-    node_array<node> gw2_nodes(g);
+	
+	node_array<node> gw2_nodes(g);
     edge_map<edge> gw2_edges(g);
     node v;
     forall_nodes(v, g) {
@@ -428,7 +451,7 @@ int main(int argc, char *argv[]) {
     gw2.redraw();
     gw2.set_zoom_objects(false);
     gw2.zoom_graph();
-    gw2.set_directed(false);
+    gw2.set_directed(false); // directed auf false setzen
 
 
 
@@ -454,7 +477,7 @@ int main(int argc, char *argv[]) {
     gw.acknowledge("Done");
     gw.edit(); // nochmal in den Edit-Modus, zum Anschauen :)
 
-    // Aufr�umen und Ende
+    // Aufraeumen und Ende
     gw.close();
     gw2.close();
     destroy_control();

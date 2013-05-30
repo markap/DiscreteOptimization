@@ -17,9 +17,10 @@
 
 #define WAIT 0.7 
 
-#define C0 = 1
-#define C1 = 1
-#define L = 1
+#define C0 3//1 
+#define C1 5//6 
+#define L 90//120
+#define DELTA 0.1
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -88,25 +89,25 @@ void dfs(node parent, node v, graph &g, GraphWin &gw, node_array<int> &dfsnum, i
 
 
 double f_zero_x(int xv, int xu, int yv, int yu) {
-    double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2)
+    double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2);
     return (C0/squared_euclidean_metric) * ((xv - xu)/sqrt(squared_euclidean_metric));
 }
 
 
 double f_zero_y(int xv, int xu, int yv, int yu) {
-    double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2)
+    double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2);
     return (C0/squared_euclidean_metric) * ((yv - yu)/sqrt(squared_euclidean_metric));
 }
 
 
 double f_one_x(int xv, int xu, int yv, int yu) {
-    double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2)
+    double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2);
     return -C1 *(sqrt(squared_euclidean_metric) - L) * ((xv - xu)/sqrt(squared_euclidean_metric));
 }
 
 
 double f_one_y(int xv, int xu, int yv, int yu) {
-    double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2)
+    double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2);
     return -C1 *(sqrt(squared_euclidean_metric) - L) * ((yv - yu)/sqrt(squared_euclidean_metric));
 }
 
@@ -149,13 +150,68 @@ void springembedder(graph &g, GraphWin &gw) {
     }
 
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 10; i++) {
         node v;
+        node u;
+
+        node_array<point> node_force(g);
+
         forall_nodes(v, g) {
+
+            double x_force = 0;
+            double y_force = 0;
+            
+            // calculate force zero
             // sum of forces to all other nodes
+            forall_nodes(u, g) {
+                if (u != v) {
+                    point pu = gw.get_position(u);
+                    point pv = gw.get_position(v);
+                    double ux = pu.xcoord();
+                    double uy = pu.ycoord();
+                    double vx = pv.xcoord();
+                    double vy = pv.ycoord();
+
+                    x_force += f_zero_x(vx, ux, vy, uy); 
+                    y_force += f_zero_y(vx, ux, vy, uy); 
+
+                }
+            }
             // sum to all neighbour nodes
+            // @todo ask
+            edge e;
+            forall_inout_edges(e, v) {
+                node u = g.opposite(v, e);
+
+                point pu = gw.get_position(u);
+                point pv = gw.get_position(v);
+                double ux = pu.xcoord();
+                double uy = pu.ycoord();
+                double vx = pv.xcoord();
+                double vy = pv.ycoord();
+
+                x_force += f_one_x(vx, ux, vy, uy); 
+                y_force += f_one_y(vx, ux, vy, uy); 
+
+            }
+
+            node_force[v] = point(x_force, y_force);
 
         }
+
+        node n;
+        forall_nodes(n, g) {
+            
+            point pn = gw.get_position(n);
+            point pf = node_force[n];
+
+            double new_x = pn.xcoord() + DELTA * pf.xcoord();
+            double new_y = pn.ycoord() + DELTA * pf.ycoord();
+
+            gw.set_position(n, point(new_x, new_y));
+        }
+
+        gw.acknowledge("next round");
     } 
 
 

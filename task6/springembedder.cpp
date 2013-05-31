@@ -16,11 +16,11 @@
 #include "control.h" // Control window (adjusting speed etc.)
 
 #define WAIT 0 
-#define VISUALIZE 15 
+#define VISUALIZE 30 
 
 // 2000 0.15 50
 
-#define C0 20000//4//1 
+#define C0 2000//4//1 
 #define C1 0.15//2//6 
 #define L 50//85//120
 #define DELTA 0.75

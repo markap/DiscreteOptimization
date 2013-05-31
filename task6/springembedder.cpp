@@ -21,10 +21,12 @@
 
 // 2000 0.15 50
 
-#define C0 2000//4//1 
-#define C1 0.15//2//6 
+#define C0 2700//4//1 
+#define C1 0.2//2//6 
 #define L 50//85//120
-#define DELTA 0.75
+#define DELTA 0.7
+#define D 500
+double len;
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -106,15 +108,19 @@ double f_zero_y(int xv, int xu, int yv, int yu) {
 
 double f_one_x(int xv, int xu, int yv, int yu) {
     double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2);
-    return -C1 *(sqrt(squared_euclidean_metric) - L) * ((xv - xu)/sqrt(squared_euclidean_metric));
+    return -C1 *(sqrt(squared_euclidean_metric) - len) * ((xv - xu)/sqrt(squared_euclidean_metric));
 }
 
 
 double f_one_y(int xv, int xu, int yv, int yu) {
     double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2);
-    return -C1 *(sqrt(squared_euclidean_metric) - L) * ((yv - yu)/sqrt(squared_euclidean_metric));
+    return -C1 *(sqrt(squared_euclidean_metric) - len) * ((yv - yu)/sqrt(squared_euclidean_metric));
 }
 
+
+double distance(int xv, int xu, int yv, int yu) {
+    return pow(xv - xu, 2) + pow(yv -yu, 2);
+}
 
 
 void springembedder(graph &g, GraphWin &gw) {
@@ -122,6 +128,11 @@ void springembedder(graph &g, GraphWin &gw) {
     double force_stop = FORCE_STOP * g.number_of_nodes();
     p("stop is ");
     p(force_stop);
+
+    len = 35;//L / g.number_of_nodes(); 
+    len = 80;
+    p("l is ");
+    p(len);
     
     node_array<int> components(g, 0);
     int component_index = 0;
@@ -159,6 +170,11 @@ void springembedder(graph &g, GraphWin &gw) {
         gw.update_graph();
     }
 
+    edge e;
+    forall_edges(e, g) {
+        gw.set_color(e, blue);
+    }
+
     int visualize = 1;
 
     node_array<point> node_position(g);
@@ -182,6 +198,7 @@ void springembedder(graph &g, GraphWin &gw) {
             double x_force = 0;
             double y_force = 0;
             
+            // repulsive force
             // calculate force zero
             // sum of forces to all other nodes
             forall_nodes(u, g) {
@@ -193,8 +210,17 @@ void springembedder(graph &g, GraphWin &gw) {
                     double vx = pv.xcoord();
                     double vy = pv.ycoord();
 
-                    x_force += f_zero_x(vx, ux, vy, uy); 
-                    y_force += f_zero_y(vx, ux, vy, uy); 
+                    // clipping
+                    if (distance(vx, ux, vy, uy) < pow(D, 2)) {
+
+                        x_force += f_zero_x(vx, ux, vy, uy); 
+                        y_force += f_zero_y(vx, ux, vy, uy); 
+                    } else {
+                        p("clipping");
+                    }
+                    //p(f_zero_x(vx, ux, vy, uy));
+                    //p(f_zero_y(vx, ux, vy, uy));
+                    //p("-----------");
 
                 }
             }
@@ -242,6 +268,10 @@ void springembedder(graph &g, GraphWin &gw) {
             }
         }
 
+        if ((visualize % VISUALIZE == 0 || total_force < force_stop) && g.number_of_nodes() > 10) {
+            gw.zoom_graph();
+        }
+
         visualize++;
 
         p(total_force);
@@ -262,7 +292,6 @@ int main(int argc, char *argv[]) {
 
     p(C0);
     p(C1);
-    p(L);
     p(DELTA);
 
     // Create window for illustrating the graph with size 800 x 600 

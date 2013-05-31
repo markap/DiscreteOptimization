@@ -16,13 +16,14 @@
 #include "control.h" // Control window (adjusting speed etc.)
 
 #define WAIT 0 
+#define VISUALIZE 15 
 
 // 2000 0.15 50
 
-#define C0 500//4//1 
-#define C1 4//2//6 
-#define L 60//85//120
-#define DELTA 0.1
+#define C0 20000//4//1 
+#define C1 0.15//2//6 
+#define L 50//85//120
+#define DELTA 0.75
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -153,6 +154,14 @@ void springembedder(graph &g, GraphWin &gw) {
     }
     */
 
+    int visualize = 1;
+
+    node_array<point> node_position(g);
+    node n;
+    forall_nodes(n, g) {
+        node_position[n] = gw.get_position(n);
+    }
+
 
     for (int i = 0; i < 1000; i++) {
         node v;
@@ -172,8 +181,8 @@ void springembedder(graph &g, GraphWin &gw) {
             // sum of forces to all other nodes
             forall_nodes(u, g) {
                 if (u != v) {
-                    point pu = gw.get_position(u);
-                    point pv = gw.get_position(v);
+                    point pu = node_position[u];
+                    point pv = node_position[v];
                     double ux = pu.xcoord();
                     double uy = pu.ycoord();
                     double vx = pv.xcoord();
@@ -190,8 +199,8 @@ void springembedder(graph &g, GraphWin &gw) {
             forall_inout_edges(e, v) {
                 node u = g.opposite(v, e);
 
-                point pu = gw.get_position(u);
-                point pv = gw.get_position(v);
+                point pu = node_position[u];
+                point pv = node_position[v];
                 double ux = pu.xcoord();
                 double uy = pu.ycoord();
                 double vx = pv.xcoord();
@@ -212,21 +221,25 @@ void springembedder(graph &g, GraphWin &gw) {
         p(x_force_global);
         p(y_force_global);
 
-        gw.message(string("x force is %.1f, y force is %.1f", x_force_global, y_force_global));
+        gw.message(string("round %d, x force is %.1f, y force is %.1f", visualize, x_force_global, y_force_global));
 
         node n;
         forall_nodes(n, g) {
             
-            point pn = gw.get_position(n);
+            point pn = node_position[n];
             point pf = node_force[n];
 
             double new_x = pn.xcoord() + DELTA * pf.xcoord();
             double new_y = pn.ycoord() + DELTA * pf.ycoord();
 
-            gw.set_position(n, point(new_x, new_y));
+            node_position[n] = point(new_x, new_y);
+            if (visualize % VISUALIZE == 0) {
+                gw.set_position(n, node_position[n]);
+            }
         }
 
         //gw.acknowledge("next round");
+        visualize++;
     } 
 
 

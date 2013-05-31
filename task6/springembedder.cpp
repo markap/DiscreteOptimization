@@ -16,7 +16,8 @@
 #include "control.h" // Control window (adjusting speed etc.)
 
 #define WAIT 0 
-#define VISUALIZE 30 
+#define VISUALIZE 70 
+#define FORCE_STOP 0.4
 
 // 2000 0.15 50
 
@@ -118,7 +119,10 @@ double f_one_y(int xv, int xu, int yv, int yu) {
 
 void springembedder(graph &g, GraphWin &gw) {
     
-    /**
+    double force_stop = FORCE_STOP * g.number_of_nodes();
+    p("stop is ");
+    p(force_stop);
+    
     node_array<int> components(g, 0);
     int component_index = 0;
     int akt = 0;
@@ -140,10 +144,12 @@ void springembedder(graph &g, GraphWin &gw) {
 
     } while(akt < g.number_of_nodes());
 
+    node new_node = NULL;
+
     p(component_index);
     if (component_index > 1) {
         point p1 = gw.get_position(one_node_per_component.front());
-        node new_node = gw.new_node(point(p1.xcoord() + 10, p1.ycoord() + 10));
+        new_node = gw.new_node(point(p1.xcoord() + 10, p1.ycoord() + 10));
         node v;
         forall(v, one_node_per_component) {
             gw.new_edge(v, new_node);
@@ -152,7 +158,6 @@ void springembedder(graph &g, GraphWin &gw) {
 
         gw.update_graph();
     }
-    */
 
     int visualize = 1;
 
@@ -162,15 +167,15 @@ void springembedder(graph &g, GraphWin &gw) {
         node_position[n] = gw.get_position(n);
     }
 
-
-    for (int i = 0; i < 1000; i++) {
+    double total_force;
+    do {
         node v;
         node u;
 
         node_array<point> node_force(g);
 
-        double x_force_global = 0;
-        double y_force_global = 0;
+        double x_force_global = 0.0;
+        double y_force_global = 0.0;
 
         forall_nodes(v, g) {
 
@@ -193,8 +198,8 @@ void springembedder(graph &g, GraphWin &gw) {
 
                 }
             }
+
             // sum to all neighbour nodes
-            // @todo ask
             edge e;
             forall_inout_edges(e, v) {
                 node u = g.opposite(v, e);
@@ -213,13 +218,12 @@ void springembedder(graph &g, GraphWin &gw) {
 
             node_force[v] = point(x_force, y_force);
 
-            x_force_global += abs(x_force);
-            y_force_global += abs(y_force);
+            x_force_global += fabs(x_force);
+            y_force_global += fabs(y_force);
 
         }
 
-        p(x_force_global);
-        p(y_force_global);
+        total_force = x_force_global + y_force_global;
 
         gw.message(string("round %d, x force is %.1f, y force is %.1f", visualize, x_force_global, y_force_global));
 
@@ -233,14 +237,20 @@ void springembedder(graph &g, GraphWin &gw) {
             double new_y = pn.ycoord() + DELTA * pf.ycoord();
 
             node_position[n] = point(new_x, new_y);
-            if (visualize % VISUALIZE == 0) {
+            if (visualize % VISUALIZE == 0 || total_force < force_stop) {
                 gw.set_position(n, node_position[n]);
             }
         }
 
-        //gw.acknowledge("next round");
         visualize++;
-    } 
+
+        p(total_force);
+    } while (total_force > force_stop);
+
+
+    if (new_node != NULL) {
+        gw.del_node(new_node);
+    }
 
 
 
@@ -249,7 +259,7 @@ void springembedder(graph &g, GraphWin &gw) {
 
 // Main program
 int main(int argc, char *argv[]) {
-    
+
     p(C0);
     p(C1);
     p(L);
@@ -260,6 +270,7 @@ int main(int argc, char *argv[]) {
     gw.display(); // Display window on the screen
     create_control(); // Display control window
     gw.set_directed(false); // use undirected graph presentation
+    gw.set_animation_steps(2);
 
     if (argc > 1) {    // falls Name als Parameter, Graph laden
         gw.read(argv[1]);

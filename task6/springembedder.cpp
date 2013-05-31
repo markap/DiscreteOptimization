@@ -15,11 +15,13 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0.7 
+#define WAIT 0 
 
-#define C0 3//1 
-#define C1 5//6 
-#define L 90//120
+// 2000 0.15 50
+
+#define C0 500//4//1 
+#define C1 4//2//6 
+#define L 60//85//120
 #define DELTA 0.1
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
@@ -58,7 +60,7 @@ void dfs(node parent, node v, graph &g, GraphWin &gw, node_array<int> &dfsnum, i
     gw.set_user_label(v, string("%d", dfsnum[v]));  // DFS-Nummer anzeigen
     gw.set_color(v, red);                           // Knoten rot färben
     gw.redraw();                                    // Darstellung aktualisieren
-    control_wait(0.5);                              // 0.5 sec warten
+    control_wait(WAIT);                              // 0.5 sec warten
     components[v] = index;
 
     // GraphWin-Graphen sind immer gerichtet, auch wenn auf dem Bildschirm
@@ -74,11 +76,11 @@ void dfs(node parent, node v, graph &g, GraphWin &gw, node_array<int> &dfsnum, i
                 gw.set_width(e, 2);            // Kante fett anzeigen
                 dfs(v, w, g, gw, dfsnum, akt, components, index); // rekursiver Aufruf fuer w
                 gw.set_color(e, blue);         // Kante blau färben
-                control_wait(0.5);             // 0.5 sec warten
+                control_wait(WAIT);             // 0.5 sec warten
             } else {    // Knoten w war schon besucht
                 if (dfsnum[w] < dfsnum[v]) { // Rückwärtskante
                     gw.set_color(e, green);    // grün färben
-                    control_wait(0.5);         // 0.5 sec warten
+                    control_wait(WAIT);         // 0.5 sec warten
                 }
             }
         }
@@ -115,6 +117,7 @@ double f_one_y(int xv, int xu, int yv, int yu) {
 
 void springembedder(graph &g, GraphWin &gw) {
     
+    /**
     node_array<int> components(g, 0);
     int component_index = 0;
     int akt = 0;
@@ -148,13 +151,17 @@ void springembedder(graph &g, GraphWin &gw) {
 
         gw.update_graph();
     }
+    */
 
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1000; i++) {
         node v;
         node u;
 
         node_array<point> node_force(g);
+
+        double x_force_global = 0;
+        double y_force_global = 0;
 
         forall_nodes(v, g) {
 
@@ -197,7 +204,15 @@ void springembedder(graph &g, GraphWin &gw) {
 
             node_force[v] = point(x_force, y_force);
 
+            x_force_global += abs(x_force);
+            y_force_global += abs(y_force);
+
         }
+
+        p(x_force_global);
+        p(y_force_global);
+
+        gw.message(string("x force is %.1f, y force is %.1f", x_force_global, y_force_global));
 
         node n;
         forall_nodes(n, g) {
@@ -211,7 +226,7 @@ void springembedder(graph &g, GraphWin &gw) {
             gw.set_position(n, point(new_x, new_y));
         }
 
-        gw.acknowledge("next round");
+        //gw.acknowledge("next round");
     } 
 
 
@@ -221,6 +236,11 @@ void springembedder(graph &g, GraphWin &gw) {
 
 // Main program
 int main(int argc, char *argv[]) {
+    
+    p(C0);
+    p(C1);
+    p(L);
+    p(DELTA);
 
     // Create window for illustrating the graph with size 800 x 600 
     GraphWin gw(800, 600);

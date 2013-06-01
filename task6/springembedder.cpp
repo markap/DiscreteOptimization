@@ -17,15 +17,20 @@
 
 #define WAIT 0 
 #define VISUALIZE 70 
-#define FORCE_STOP 0.4
+#define FORCE_STOP 0.5
 
 // 2000 0.15 50
 
 #define C0 2700//4//1 
 #define C1 0.2//2//6 
 #define L 50//85//120
+<<<<<<< HEAD
 #define DELTA 0.8
 #define D 500
+=======
+#define DELTA 0.7
+#define D 400
+>>>>>>> fc8cb7102ea37b1ff4affa8fcc22ab2659bcdc92
 double len;
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
@@ -125,12 +130,8 @@ double distance(int xv, int xu, int yv, int yu) {
 
 void springembedder(graph &g, GraphWin &gw) {
     
-    double force_stop = FORCE_STOP * g.number_of_nodes();
-    p("stop is ");
-    p(force_stop);
 
     len = 35;//L / g.number_of_nodes(); 
-    len = 80;
     p("l is ");
     p(len);
     
@@ -156,6 +157,15 @@ void springembedder(graph &g, GraphWin &gw) {
     } while(akt < g.number_of_nodes());
 
     node new_node = NULL;
+
+    int forceindex = 1;
+    if (component_index > 1) {
+        forceindex = 1.5;
+    }
+
+    double force_stop = FORCE_STOP * g.number_of_nodes() * forceindex;
+    p("stop is ");
+    p(force_stop);
 
     p(component_index);
     if (component_index > 1) {
@@ -268,7 +278,7 @@ void springembedder(graph &g, GraphWin &gw) {
             }
         }
 
-        if ((visualize % VISUALIZE == 0 || total_force < force_stop) && g.number_of_nodes() > 10) {
+        if ((visualize % VISUALIZE == 0 || total_force < force_stop) && g.number_of_nodes() > 15) {
             gw.zoom_graph();
         }
 

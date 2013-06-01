@@ -59,6 +59,7 @@ using leda::green;
 using leda::yellow;
 using leda::black;
 using leda::violet;
+using leda::cyan;
 using leda::string;
 using leda::queue;
 using leda::list;
@@ -80,6 +81,7 @@ using leda::bold_font;
     //   GraphWin gw: the graph windows as reference
     //   node start_node: the starting node
     // 	 node target_node: the target node
+    //   int number_of_edges_matched: the number of edges in matching
     // 	 edge_array edge_weight: contains all edge weights and changes them upon inverting a path
     // 	 edge_array<int> &matching: contains 0 if edge is unmatched and 1 if edge is matched
     //	 edge_array<double> &inmutual_weight: contains all origin edge weights to compute weight count
@@ -87,16 +89,24 @@ using leda::bold_font;
     //	 GraphWin &gw2: second graphwin window 
     //	 node_array<node> &gw2_nodes:  mapping nodes from graph to nodes of graph window 2
     //	 edge_map<edge> &gw2_edges:	mapping edges from graph to edges of graph window 2
-int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_array<double> &edge_weight, edge_array<int> &matching, edge_array<double> &inmutual_weight, double &weight_count, GraphWin &gw2, node_array<node> &gw2_nodes, edge_map<edge> &gw2_edges) {
+int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node,int &number_of_edges_matched,  edge_array<double> &edge_weight, edge_array<int> &matching, edge_array<double> &inmutual_weight, double &weight_count, GraphWin &gw2, node_array<node> &gw2_nodes, edge_map<edge> &gw2_edges) {
+    if (max ==0){
+    gw.message(string("Now Dijkstra is searching for shortest path."));
+    gw2.message(string("Now Dijkstra is searching for shortest path."));
+	}
+    if (max == 1){
+	gw.message(string("Now Dijskra is searching for longest path."));
+	gw2.message(string("Now Dijkstra is searching for longest path."));
+}
 
-	//inital node and edge coloring in yellow before each run of dijsktra
+//inital node and edge coloring in yellow before each run of dijsktra
     node ndx;
     forall_nodes(ndx, g) {
         gw.set_color(ndx, yellow);
     }
     edge edg;
     forall_edges(edg, g) {
-        gw.set_color(edg, yellow);
+        gw.set_color(edg, cyan);
     }
 
 
@@ -133,22 +143,22 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
     prio_queue.insert(start_node, 0); // insert start node in priority queue
 
     gw.set_color(start_node, red); // color node in red
-    control_wait(WAIT); // wait
+   // control_wait(WAIT); // wait
 
-    while (!prio_queue.empty()) { // while unprocessed nodes are in queue, proceed with conducting the algorith
+    while (!prio_queue.empty()) { // while unprocessed nodes are in queue, proceed with conducting the algorithm
         
         node current_node = prio_queue.del_min(); // pop the node with least distance from all completed nodes
         if (current_node == start_node) {
-            gw.set_color(current_node, green); // start node is depicted in green
+           // gw.set_color(current_node, green); // start node is depicted in green
         } else {
 
-            gw.set_color(current_node, blue); // all other nodes being finished in blue
+            //gw.set_color(current_node, blue); // all other nodes being finished in blue
 
-            gw.set_color(from_edge[current_node], blue);// processed edges are colored in blue
+            //gw.set_color(from_edge[current_node], blue);// processed edges are colored in blue
         }
 
 
-        control_wait(WAIT);
+      //  control_wait(WAIT);
 
         // add node to done set
         edge e;
@@ -159,20 +169,20 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
             double d = distance[current_node] + edge_weight[e]; // calculate distance from current node
             if (distance[n] == -1) { // if node has not been inserted into priority queue yet, insert it
                 //insert
-                p("insert");
+               // p("insert");
                 prio_queue.insert(n, d); // insert node in prio queue with respective distance
                 distance[n] = d; // save distance
                 from[n] = current_node; // save parent node
                 from_edge[n] = e;//save parent edge
 
-                gw.set_color(n, red);// nodes in priority queue, still being processed are depicted in red
-                gw.set_color(e, red);// as well as their corresponding edges
-                p(distance[n]);
-                p(edge_weight[e]);
-                p(d);
-                gw.set_user_label(n, string("%.0f", d)); // show current distance in node visible for user during runtime
+              //  gw.set_color(n, red);// nodes in priority queue, still being processed are depicted in red
+               // gw.set_color(e, red);// as well as their corresponding edges
+               // p(distance[n]);
+              //  p(edge_weight[e]);
+              //  p(d);
+              //  gw.set_user_label(n, string("%.0f", d)); // show current distance in node visible for user during runtime
                 gw.redraw();
-                control_wait(WAIT);
+              //  control_wait(WAIT);
                 
             } else if (distance[n] > d) {// if node has already been inserted in priority queue
             //with a distance higher than the distance from current node then update its priority value
@@ -181,14 +191,14 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
                 distance[n] = d; // update distance
                 p(distance[n]);
                 p(edge_weight[e]);
-                gw.set_user_label(n, string("%.0f", d)); // update distance shown in node as user label
-                gw.set_color(e, red); // color node in red as it is still being processed
-                gw.set_color(from_edge[n], green); // color previous parent edge in green as it has already been processed
+               // gw.set_user_label(n, string("%.0f", d)); // update distance shown in node as user label
+               // gw.set_color(e, red); // color node in red as it is still being processed
+               // gw.set_color(from_edge[n], green); // color previous parent edge in green as it has already been processed
                 // but is not an edge which is part of a shortest path
                 from[n] = current_node; // update parent node
                 from_edge[n] = e;// update parent edge
 
-                control_wait(WAIT);// wait 1.0 sec
+                //control_wait(WAIT);// wait 1.0 sec
                     
             } 
 
@@ -198,17 +208,33 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
     if (distance[target_node] == -1) {
         return 0;
     }
+    int augmenting_path_length=0;
+    for (node nodeiterator = target_node;nodeiterator!=start_node;nodeiterator=from[nodeiterator]){
+          augmenting_path_length+=inmutual_weight[from_edge[nodeiterator]];
+	  p(string("New augmenting path length is %d", augmenting_path_length));
+}
 
-    // Inverts the path 
-    edge_array<int> in_path(g, 0); // shortest/longest edge path 
-    node next_node = target_node; 
-    node last_node;
+    // Inverts the path
+    if (max ==0){ 
+    gw.message(string("Now shortest augmenting path is being inverted. Its length is %d", augmenting_path_length));
+    gw2.message(string("Now shortest augmenting  path is being inverted. Its length is %d", augmenting_path_length));
+    }
+else {
+    gw.message(string ("Now longest augmenting path is being inverted. Its length is %d", augmenting_path_length));
+    gw2.message(string ("Now longest augmenting path is being inverted. Its length is %d", augmenting_path_length));
+}
+   control_wait(WAIT); // wait 
+   edge_array<int> in_path(g, 0); // shortest/longest edge path 
+    node next_node = target_node;
+ 
+    //node last_node;
     edge next_edge;
+   
 	// Path will be colored in orange
     //gw.set_color(from[target_node], orange); // Depict target node in orange
     //gw.set_color(from[from[target_node]], orange); // Color the predecessor in orange
     //gw.set_color(from[from[from[target_node]]], orange);
-    while ((next_node = from[next_node]) != start_node) { // loop through the path
+    while (from[(next_node = from[next_node])] != start_node) { // loop through the path
         next_edge = from_edge[next_node]; 
 		//gw.set_color(from[from[from[target_node]]], orange);
         in_path[next_edge] = 1;
@@ -218,10 +244,13 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
         gw.update_graph();
         gw.set_color(next_edge, orange);
 
-        last_node = next_node;
+        
 		//Reverse matchings
+         control_wait(WAIT);
 	    if (matching[next_edge] == 0) {
             matching[next_edge] = 1;
+	    number_of_edges_matched++;
+	    //gw.message(string("Current number of edges matched: %d", number_of_edges_matched));
             if (gw2_edges[next_edge] != NULL) {
                 gw2.set_width(gw2_edges[next_edge], 10);
                 gw2.set_user_label(next_edge, string("%s", gw2.get_user_label(next_edge)));
@@ -233,6 +262,8 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
             weight_count += inmutual_weight[next_edge]; //Adjust the weight of current minimum/maximum matching
         } else {
             matching[next_edge] = 0;
+	    number_of_edges_matched--;
+	    //gw.message(string("Current number of edges matched: %d", number_of_edges_matched));
             if (gw2_edges[next_edge] != NULL) {
                 gw2.set_width(gw2_edges[next_edge], 1);
                 gw2.set_user_label(next_edge, string("%s", gw2.get_user_label(next_edge)));
@@ -245,8 +276,9 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node, edge_a
         control_wait(WAIT);
     }
 
+    control_wait(WAIT); 
     gw.del_edge(from_edge[target_node]); // delete last edge on path
-    gw.del_edge(from_edge[last_node]); // delete first edge on path
+    gw.del_edge(from_edge[next_node]); // delete first edge on path
 
     edge ed;
     forall_edges(ed, g) {
@@ -289,7 +321,8 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
 
     gw.set_label_type(source_node, user_label);   
     gw.set_label_type(target_node, user_label);  
-
+    
+    int number_of_edges_matched = 0;
 	
 	// Find node which is on the right (v1_max), and on the left (v1_min) in vertex set 1
     double v1_min = numeric_limits<double>::infinity();
@@ -370,17 +403,17 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
     p("out nodes");
     p(g.outdeg(source_node));
     while (1) {
-        int done = dijkstra(g, gw, source_node, target_node, edge_weight, matching, inmutual_weight, weight_count, gw2, gw2_nodes, gw2_edges);
+        int done = dijkstra(g, gw, source_node, target_node,number_of_edges_matched, edge_weight, matching, inmutual_weight, weight_count, gw2, gw2_nodes, gw2_edges);
 
         p("weight_count");
         p(weight_count);
         if (max == 1) { // on both graphwin windows print out maximum weight count
-            gw.message(string("maximum weight is %.1f", weight_count));
-            gw2.message(string("maximum weight is %.1f", weight_count));
+            gw.message(string("maximum weight is %.1f. Number of edges matched is %d.", weight_count, number_of_edges_matched));
+            gw2.message(string("maximum weight is %.1f. Number of edges matched is %d.", weight_count, number_of_edges_matched));
         } else if (max == 0) {// on both graphwin windows print out minimum weight count
             
-            gw.message(string("minimum weight is %.1f", weight_count));
-            gw2.message(string("minimum weight is %.1f", weight_count));
+            gw.message(string("minimum weight is %.1f. Number of edges matched is %d.", weight_count, number_of_edges_matched));
+            gw2.message(string("minimum weight is %.1f. Number of edges matched is %d.", weight_count, number_of_edges_matched));
         }
         if (done == 0) { // end algorithm
 

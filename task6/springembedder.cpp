@@ -24,7 +24,7 @@
 #define C0 2700//4//1 
 #define C1 0.2//2//6 
 #define L 50//85//120
-#define DELTA 0.7
+#define DELTA 0.8
 #define D 500
 double len;
 

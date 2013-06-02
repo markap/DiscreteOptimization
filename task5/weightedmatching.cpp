@@ -31,7 +31,6 @@ Bold edges are matched, while thin edges are unmatched, nodes and edges are colo
 #include <LEDA/system/basic.h>
 #include <LEDA/core/queue.h>
 #include <LEDA/graph/node_pq.h>
-#include <LEDA/graph/node_map.h>
 #include <LEDA/graph/node_partition.h>
 #include <LEDA/core/list.h>
 #include <LEDA/geo/point.h>
@@ -65,8 +64,6 @@ using leda::string;
 using leda::queue;
 using leda::list;
 using leda::node_pq;
-using leda::node_map;
-using leda::edge_map;
 using leda::edge_array;
 using leda::node_partition;
 using std::numeric_limits;
@@ -88,8 +85,6 @@ using leda::bold_font;
     //	 edge_array<double> &inmutual_weight: contains all origin edge weights to compute weight count
     // 	 double &weight_count: current weight count
     //	 GraphWin &gw2: second graphwin window 
-    //	 node_array<node> &gw2_nodes:  mapping nodes from graph to nodes of graph window 2
-    //	 edge_map<edge> &gw2_edges:	mapping edges from graph to edges of graph window 2
 int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node,int &number_of_edges_matched,  edge_array<double> &edge_weight, edge_array<int> &matching, edge_array<double> &inmutual_weight, double &weight_count, leda::GRAPH<node, edge> &h, GraphWin &gw2) {
     if (max ==0){
         gw.message(string("Now Dijkstra is searching for shortest path."));
@@ -300,8 +295,6 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node,int &nu
 //// parameter:
     //   graph g: the graph as reference
     //   GraphWin gw: the graph windows as reference
-    //	 node_array<node> &gw2_nodes:  mapping nodes from graph to nodes of graph window 2
-    //	 edge_map<edge> &gw2_edges:	mapping edges from graph to edges of graph window 2
 
 
 void weightedmatching(graph &g, GraphWin &gw, leda::GRAPH<node, edge> &h, GraphWin &gw2) {

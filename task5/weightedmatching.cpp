@@ -25,6 +25,7 @@ Bold edges are matched, while thin edges are unmatched, nodes and edges are colo
 #include <math.h>
 #include <climits>
 #include <LEDA/graphics/graphwin.h>
+#include <LEDA/graph/graph_misc.h>
 #include <LEDA/graphics/window.h>
 #include <LEDA/graphics/color.h>
 #include <LEDA/system/basic.h>
@@ -37,7 +38,7 @@ Bold edges are matched, while thin edges are unmatched, nodes and edges are colo
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0.7 
+#define WAIT 0
 
 int max = 0;
 int transformed = 0;
@@ -89,15 +90,15 @@ using leda::bold_font;
     //	 GraphWin &gw2: second graphwin window 
     //	 node_array<node> &gw2_nodes:  mapping nodes from graph to nodes of graph window 2
     //	 edge_map<edge> &gw2_edges:	mapping edges from graph to edges of graph window 2
-int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node,int &number_of_edges_matched,  edge_array<double> &edge_weight, edge_array<int> &matching, edge_array<double> &inmutual_weight, double &weight_count, GraphWin &gw2, node_array<node> &gw2_nodes, edge_map<edge> &gw2_edges) {
+int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node,int &number_of_edges_matched,  edge_array<double> &edge_weight, edge_array<int> &matching, edge_array<double> &inmutual_weight, double &weight_count, leda::GRAPH<node, edge> &h, GraphWin &gw2) {
     if (max ==0){
-    gw.message(string("Now Dijkstra is searching for shortest path."));
-    gw2.message(string("Now Dijkstra is searching for shortest path."));
+        gw.message(string("Now Dijkstra is searching for shortest path."));
+        gw2.message(string("Now Dijkstra is searching for shortest path."));
 	}
     if (max == 1){
-	gw.message(string("Now Dijskra is searching for longest path."));
-	gw2.message(string("Now Dijkstra is searching for longest path."));
-}
+	    gw.message(string("Now Dijskra is searching for longest path."));
+	    gw2.message(string("Now Dijkstra is searching for longest path."));
+    }
 
 //inital node and edge coloring in yellow before each run of dijsktra
     node ndx;
@@ -216,15 +217,14 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node,int &nu
 
     // Inverts the path
     if (max ==0){ 
-    gw.message(string("Now shortest augmenting path is being inverted. Its length is %d", augmenting_path_length));
-    gw2.message(string("Now shortest augmenting  path is being inverted. Its length is %d", augmenting_path_length));
-    }
-else {
-    gw.message(string ("Now longest augmenting path is being inverted. Its length is %d", augmenting_path_length));
-    gw2.message(string ("Now longest augmenting path is being inverted. Its length is %d", augmenting_path_length));
+        gw.message(string("Now shortest augmenting path is being inverted. Its length is %d", augmenting_path_length));
+        gw2.message(string("Now shortest augmenting  path is being inverted. Its length is %d", augmenting_path_length));
+    } else {
+        gw.message(string ("Now longest augmenting path is being inverted. Its length is %d", augmenting_path_length));
+        gw2.message(string ("Now longest augmenting path is being inverted. Its length is %d", augmenting_path_length));
 }
-   control_wait(WAIT); // wait 
-   edge_array<int> in_path(g, 0); // shortest/longest edge path 
+    control_wait(WAIT); // wait 
+    edge_array<int> in_path(g, 0); // shortest/longest edge path 
     node next_node = target_node;
  
     //node last_node;
@@ -249,25 +249,25 @@ else {
          control_wait(WAIT);
 	    if (matching[next_edge] == 0) {
             matching[next_edge] = 1;
-	    number_of_edges_matched++;
+	        number_of_edges_matched++;
 	    //gw.message(string("Current number of edges matched: %d", number_of_edges_matched));
-            if (gw2_edges[next_edge] != NULL) {
-                gw2.set_width(gw2_edges[next_edge], 10);
+            //if (h[next_edge] != NULL) {
+                gw2.set_width(next_edge, 10);
                 gw2.set_user_label(next_edge, string("%s", gw2.get_user_label(next_edge)));
                 gw2.redraw();
-            } 
+            //} 
 
             p("add w");
             p(inmutual_weight[next_edge]);
             weight_count += inmutual_weight[next_edge]; //Adjust the weight of current minimum/maximum matching
         } else {
             matching[next_edge] = 0;
-	    number_of_edges_matched--;
+	        number_of_edges_matched--;
 	    //gw.message(string("Current number of edges matched: %d", number_of_edges_matched));
-            if (gw2_edges[next_edge] != NULL) {
-                gw2.set_width(gw2_edges[next_edge], 1);
+            //if (h[next_edge] != NULL) {
+                gw2.set_width(next_edge, 1);
                 gw2.set_user_label(next_edge, string("%s", gw2.get_user_label(next_edge)));
-            }
+            //}
 
             weight_count -= inmutual_weight[next_edge];//Adjust the weight of current minimum/maximum matching
             p("remove w");
@@ -304,12 +304,12 @@ else {
     //	 edge_map<edge> &gw2_edges:	mapping edges from graph to edges of graph window 2
 
 
-void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &gw2_nodes, edge_map<edge> &gw2_edges) {
+void weightedmatching(graph &g, GraphWin &gw, leda::GRAPH<node, edge> &h, GraphWin &gw2) {
 
     list<node> v_set_1; // vertex set 1
     list<node> v_set_2; // vertex set 2
 
-    edge_map<double> edge_weight(g);
+    gw.set_flush(false);
 
 
     int nodes_count = 0; // counts all nodes of the graph
@@ -345,9 +345,9 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
             if (p1.xcoord() < v1_min) v1_min = p1.xcoord();	// x coordinate of current node on the very left in v1
             v_set_1.append(n); // append node to vertex set 1
             e = gw.new_edge(source_node, n);// connect source node with all nodes in v1
-            edge_weight[e] = 0.0; // edge weight on these connections is to be set to 0
-            gw2_edges[e] = NULL;
-            gw.set_user_label(e, string("%.1f", edge_weight[e]));
+            //edge_weight[e] = 0.0; // edge weight on these connections is to be set to 0
+            //gw2_edges[e] = NULL;
+            gw.set_user_label(e, string("0"));
 
         } else if (s == string("2")) {
             v2_height = p1.ycoord();
@@ -355,9 +355,9 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
             if (p1.xcoord() < v2_min) v2_min = p1.xcoord();
             v_set_2.append(n);
             e = gw.new_edge(n, target_node); // connect target node with all nodes in v2
-            edge_weight[e] = 0.0;// edge weight on these connections is to be set to 0
-            gw2_edges[e] = NULL;
-            gw.set_user_label(e, string("%.1f", edge_weight[e]));
+            //edge_weight[e] = 0.0;// edge weight on these connections is to be set to 0
+            //gw2_edges[e] = NULL;
+            gw.set_user_label(e, string("0"));
         }
 
         nodes_count++;
@@ -368,11 +368,16 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
     point p_target((v2_max + v2_min) / 2, v2_height - 5);
     gw.set_position(target_node, p_target);// position target node in the middle of all nodes of v2 and slightly underneath
 
+    gw.redraw();
+    gw.set_flush(true);
+
     gw.zoom_graph(); // zoom out to assure that all nodes are visible in the graph window
 
+    
 
 
     edge e;
+    edge_array<double> edge_weight(g);
     double min_weight = numeric_limits<double>::infinity();
     forall_edges(e, g) { // insert the edge from the user labels
         string s = gw.get_user_label(e);
@@ -403,7 +408,7 @@ void weightedmatching(graph &g, GraphWin &gw, GraphWin &gw2, node_array<node> &g
     p("out nodes");
     p(g.outdeg(source_node));
     while (1) {
-        int done = dijkstra(g, gw, source_node, target_node,number_of_edges_matched, edge_weight, matching, inmutual_weight, weight_count, gw2, gw2_nodes, gw2_edges);
+        int done = dijkstra(g, gw, source_node, target_node,number_of_edges_matched, edge_weight, matching, inmutual_weight, weight_count, h, gw2);
 
         p("weight_count");
         p(weight_count);
@@ -479,30 +484,40 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 	// Zweites Graphwin window
-    GraphWin gw2(800, 600);
+    leda::GRAPH<node, edge> h;
+    CopyGraph(h, g);
+    p("h has");
+    p(h.number_of_nodes());
+    GraphWin gw2(h, 800, 600);
     gw2.get_window().set_grid_mode(gw.get_window().get_grid_mode());
     gw2.get_window().set_grid_style(gw.get_window().get_grid_style());
     gw2.get_window().set_grid_dist(gw.get_window().get_grid_dist());
+    gw2.display();
+    gw2.set_graph(h);
+    gw2.redraw();
     gw2.display();
 
 
     // Nun zeigen wir fuer alle Knoten den bfsnum-Wert als User-Label an
     // sowie initialisieren den Graphen gelb.
+    gw.set_animation_steps(0);
+    gw2.set_animation_steps(0);
+    gw2.set_flush(false);
 	
-	node_array<node> gw2_nodes(g);
-    edge_map<edge> gw2_edges(g);
     node v;
     forall_nodes(v, g) {
         gw.set_label_type(v, user_label);    // User-Label anzeigen (statt Index-Label)
         gw.set_color(v, yellow);
 
-        node n = gw2.new_node(gw.get_position(v));
-        gw2.set_label_type(n, user_label);    
-        gw2.set_width(n, gw.get_width(v));
-        gw2.set_height(n, gw.get_height(v));
-        gw2.set_color(n, violet);
-        gw2.set_user_label(n, string("%s", gw.get_user_label(v)));
-        gw2_nodes[v] = n;
+        //node n = gw2.new_node(gw.get_position(v));
+        //gw2.set_label_type(h[n], user_label);    
+        //gw2.set_width(n, gw.get_width(v));
+        //gw2.set_height(n, gw.get_height(v));
+        gw2.set_position(v, gw.get_position(v));
+        gw2.set_color(v, violet);
+        gw2.set_user_label(v, string("%s", gw.get_user_label(v)));
+
+        //gw2_nodes[v] = n;
 
     }
 
@@ -517,20 +532,23 @@ int main(int argc, char *argv[]) {
     forall_edges(e, g) {
         gw.set_color(e, yellow);
 
-        node source = g.source(e);
-        node target = g.target(e);
+        //node source = g.source(e);
+        //node target = g.target(e);
 
-        edge new_edge = gw2.new_edge(gw2_nodes[source], gw2_nodes[target]);
-        gw2.set_width(new_edge, 1);
-        gw2.set_color(new_edge, violet);
-        gw2.set_user_label(new_edge, string("%s", gw.get_user_label(e)));
+        //edge new_edge = gw2.new_edge(gw2_nodes[source], gw2_nodes[target]);
+        //gw2.set_width(new_edge, 1);
+        gw2.set_color(e, violet);
+        gw2.set_user_label(e, string("%s", gw.get_user_label(e)));
 
-        gw2_edges[e] = new_edge;
+        //gw2_edges[e] = new_edge;
     }
+
+    gw2.redraw();
+    gw2.set_flush(true);
 
 
     running = 1;
-    weightedmatching(g, gw, gw2, gw2_nodes, gw2_edges);
+    weightedmatching(g, gw, h, gw2);
 
     gw.acknowledge("Done");
     gw.edit(); // nochmal in den Edit-Modus, zum Anschauen :)

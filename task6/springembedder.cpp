@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <math.h>
 #include <climits>
@@ -15,16 +14,16 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0 
-#define VISUALIZE 30 
-#define FORCE_STOP 0.5
+#define WAIT 0.1  //Wartezeit
+#define VISUALIZE 15 //Anzahl der Runden, nach denen visualisiert wird
+#define FORCE_STOP 0.5 //zur Berechnung der Abbruchbedingung
 
 
-#define C0 2700//4//1 
-#define C1 0.2//2//6 
-#define DELTA 0.7
-#define D 400
-double len;
+#define C0 2700 //
+#define C1 0.2 // Federkonstante, je größer 
+#define DELTA 0.7 // "Stärke" der Kraft, wie stark beeinflussen F0 und F1 die Neupositionierung von einer Node, je größer je stärker wird die Node verschoben
+#define D_SQUARED 16000 // Maximale Distanz zum Quadrat, bei der Kraft zwischen Nodes noch berücksichtigt wird
+#define L 35 // Länge der Feder, legt den Abstand zwischen Nodes fest, an dem sich der resultierende Graph orientiert
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -58,7 +57,11 @@ using leda::bold_font;
 
 
 void dfs(node parent, node v, graph &g, GraphWin &gw, node_array<int> &dfsnum, int &akt, node_array<int> &components, int &index) {
-    dfsnum[v] = akt++;                              // DFS-Nummer zuweisen
+    
+    gw.message(string("DFS to investigate if graph is composed of subcomponents")); // Informiere Benutzer
+
+	
+	dfsnum[v] = akt++;                              // DFS-Nummer zuweisen
     gw.set_user_label(v, string("%d", dfsnum[v]));  // DFS-Nummer anzeigen
     gw.set_color(v, red);                           // Knoten rot färben
     gw.redraw();                                    // Darstellung aktualisieren
@@ -92,31 +95,31 @@ void dfs(node parent, node v, graph &g, GraphWin &gw, node_array<int> &dfsnum, i
 }
 
 
-double f_zero_x(int xv, int xu, int yv, int yu) {
+double f_zero_x(int xv, int xu, int yv, int yu) { // F0 in x-Richtung berechnen
     double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2);
     return (C0/squared_euclidean_metric) * ((xv - xu)/sqrt(squared_euclidean_metric));
 }
 
 
-double f_zero_y(int xv, int xu, int yv, int yu) {
+double f_zero_y(int xv, int xu, int yv, int yu) { // F0 in y-Richtung berechnen
     double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2);
     return (C0/squared_euclidean_metric) * ((yv - yu)/sqrt(squared_euclidean_metric));
 }
 
 
-double f_one_x(int xv, int xu, int yv, int yu) {
+double f_one_x(int xv, int xu, int yv, int yu) { // F1 in x-Richtung berechnen
     double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2);
-    return -C1 *(sqrt(squared_euclidean_metric) - len) * ((xv - xu)/sqrt(squared_euclidean_metric));
+    return -C1 *(sqrt(squared_euclidean_metric) - L) * ((xv - xu)/sqrt(squared_euclidean_metric));
 }
 
 
-double f_one_y(int xv, int xu, int yv, int yu) {
+double f_one_y(int xv, int xu, int yv, int yu) { // F1 in y-Richtung berechnen
     double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2);
-    return -C1 *(sqrt(squared_euclidean_metric) - len) * ((yv - yu)/sqrt(squared_euclidean_metric));
+    return -C1 *(sqrt(squared_euclidean_metric) - L) * ((yv - yu)/sqrt(squared_euclidean_metric));
 }
 
 
-double distance(int xv, int xu, int yv, int yu) {
+double distance(int xv, int xu, int yv, int yu) { //euklidische Distanz^2 berechnen
     return pow(xv - xu, 2) + pow(yv -yu, 2);
 }
 
@@ -124,53 +127,53 @@ double distance(int xv, int xu, int yv, int yu) {
 void springembedder(graph &g, GraphWin &gw) {
     
 
-    len = 35;//L / g.number_of_nodes(); 
-    p("l is ");
-    p(len);
+
     
-    node_array<int> components(g, 0);
-    int component_index = 0;
-    int akt = 0;
-    list<node> one_node_per_component;
+    node_array<int> components(g, 0); // gibt an, zu welcher Graphkomponente node gehört, 0 bedeutet bisher keine Komponente zugeordnet
+    int component_index = 0;		  // zum Durchiterieren der Komponenten
+    int akt = 0;					  // node counter
+    list<node> one_node_per_component;//zum Speichern einer Node einer jeden Komponente
 
 
     do {
         node v;
         forall_nodes(v, g) {
             if (components[v] == 0) {
-                node_array<int> dfsnum(g, -1);
-                component_index++;
+                node_array<int> dfsnum(g, -1); //initialisiere node_array für Tiefensuche
+                component_index++; //component index inkrementieren
                 p(component_index);
-                dfs(v, v, g, gw, dfsnum, akt, components, component_index);
-                one_node_per_component.append(v);
+                dfs(v, v, g, gw, dfsnum, akt, components, component_index); // Tiefensuche
+                one_node_per_component.append(v); //Node der aktuellen Komponente in Liste appenden
                 break;
             }
         }
 
-    } while(akt < g.number_of_nodes());
+    } while(akt < g.number_of_nodes()); // so lange, wie noch alle nodes nicht besucht sind
 
-    node new_node = NULL;
+    node new_node = NULL; // neue Node zur Verbindung mit jeder einzelnen Komponente
 
     int forceindex = 1;
     if (component_index > 1) {
         forceindex = 1.5;
     }
 
-    double force_stop = FORCE_STOP * g.number_of_nodes() * forceindex;
+    double force_stop = FORCE_STOP * g.number_of_nodes() * forceindex; //Abbruchzähler für Anzahl Durchläufe; verwendet für Abbruchbedingung
     p("stop is ");
     p(force_stop);
 
     p(component_index);
     if (component_index > 1) {
+		gw.message(string("Add a node to connect all components")); // Informiere Benutzer
         point p1 = gw.get_position(one_node_per_component.front());
-        new_node = gw.new_node(point(p1.xcoord() + 10, p1.ycoord() + 10));
+        new_node = gw.new_node(point(p1.xcoord() + 10, p1.ycoord() + 10)); // positioniere zusätzliche Node 10 in X-Richtung und 10 in Y-Richtung von Node einer bestimmten Komponente entfernt
         node v;
         forall(v, one_node_per_component) {
-            gw.new_edge(v, new_node);
+            gw.new_edge(v, new_node); //verbinde alle Komponenten über eine Node mit der zusätzlichen Node
 
         }
 
-        gw.update_graph();
+        gw.update_graph(); // update Graph
+		control_wait(0.7);
     }
 
     edge e;
@@ -180,46 +183,46 @@ void springembedder(graph &g, GraphWin &gw) {
 
     int visualize = 1;
 
-    node_array<point> node_position(g);
+    node_array<point> node_position(g); //zum Speichern der Koordinaten der Nodes
     node n;
     forall_nodes(n, g) {
-        node_position[n] = gw.get_position(n);
+        node_position[n] = gw.get_position(n);//speichere alle Koordinaten aller Nodes
     }
 
-    double total_force;
+    double total_force; // Gesamtkraft
     do {
         node v;
         node u;
 
-        node_array<point> node_force(g);
+        node_array<point> node_force(g); // zum Speichern der einzelnen Kräfte auf jede Node
 
-        double x_force_global = 0.0;
-        double y_force_global = 0.0;
+        double x_force_global = 0.0; // Gesamtkraft in X-Richtung
+        double y_force_global = 0.0; // Gesamtkraft in Y-Richtung
 
         forall_nodes(v, g) {
 
-            double x_force = 0;
-            double y_force = 0;
+            double x_force = 0;		// Setze Kraft in X-Richtung für Node default auf 0
+            double y_force = 0;		// Setze Kraft in Y-Richtung für Node default auf 0
             
             // repulsive force
             // calculate force zero
             // sum of forces to all other nodes
             forall_nodes(u, g) {
                 if (u != v) {
-                    point pu = node_position[u];
-                    point pv = node_position[v];
-                    double ux = pu.xcoord();
-                    double uy = pu.ycoord();
-                    double vx = pv.xcoord();
-                    double vy = pv.ycoord();
+                    point pu = node_position[u]; // Position von Node u
+                    point pv = node_position[v]; // Position von Node v
+                    double ux = pu.xcoord(); 	 // X-Koordinate von Node u
+                    double uy = pu.ycoord();	 // Y-Koordinate von Node u
+                    double vx = pv.xcoord();	 // X-Koordinate von Node v
+                    double vy = pv.ycoord();	 // Y-Koordinate von Node v
 
                     // clipping
-                    if (distance(vx, ux, vy, uy) < pow(D, 2)) {
+                    if (distance(vx, ux, vy, uy) < D_SQUARED) { // Durch Clipping werden nur Nodes innerhalb der Distanz 400 berücksichtigt
 
-                        x_force += f_zero_x(vx, ux, vy, uy); 
-                        y_force += f_zero_y(vx, ux, vy, uy); 
+                        x_force += f_zero_x(vx, ux, vy, uy);  //Addiere F0 zur Kraft wirkend in X-Richtung auf Node v
+                        y_force += f_zero_y(vx, ux, vy, uy);  //Addiere F0 zur Kraft wirkend in Y-Richtung auf Node v
                     } else {
-                        p("clipping");
+                        p("clipping"); // Es wird geclippt.
                     }
                     //p(f_zero_x(vx, ux, vy, uy));
                     //p(f_zero_y(vx, ux, vy, uy));
@@ -230,61 +233,61 @@ void springembedder(graph &g, GraphWin &gw) {
 
             // sum to all neighbour nodes
             edge e;
-            forall_inout_edges(e, v) {
+            forall_inout_edges(e, v) { //Berechne F1 für alle Nodes
                 node u = g.opposite(v, e);
 
-                point pu = node_position[u];
-                point pv = node_position[v];
-                double ux = pu.xcoord();
-                double uy = pu.ycoord();
-                double vx = pv.xcoord();
-                double vy = pv.ycoord();
+                point pu = node_position[u]; // Position von Node u
+                point pv = node_position[v]; // Position von Node v
+                double ux = pu.xcoord(); // X-Koordinate von Node u
+                double uy = pu.ycoord(); // Y-Koordinate von Node u
+                double vx = pv.xcoord(); // X-Koordinate von Node v
+                double vy = pv.ycoord(); // Y-Koordinate von Node v
 
-                x_force += f_one_x(vx, ux, vy, uy); 
-                y_force += f_one_y(vx, ux, vy, uy); 
+                x_force += f_one_x(vx, ux, vy, uy);  //Addiere F0 zur Kraft wirkend in X-Richtung auf Node v
+                y_force += f_one_y(vx, ux, vy, uy);  //Addiere F0 zur Kraft wirkend in Y-Richtung auf Node v
 
             }
 
-            node_force[v] = point(x_force, y_force);
+            node_force[v] = point(x_force, y_force);  // Kraft wirkend auf eine Node
 
-            x_force_global += fabs(x_force);
-            y_force_global += fabs(y_force);
+            x_force_global += fabs(x_force); //Addiere zur Gesamtkraft in X-Richtung
+            y_force_global += fabs(y_force); //Addiere zur Gesamtkraft in Y-Richtung
 
         }
 
-        total_force = x_force_global + y_force_global;
+        total_force = x_force_global + y_force_global; // Gesamtkraft
 
-        gw.message(string("iteration %d, total force is %.1f, done if force is smaller than  %.1f", visualize, total_force, force_stop));
+        gw.message(string("iteration %d, total force is %.2f, done if force is smaller than  %.2f", visualize, total_force, force_stop)); // Informiere Benutzer
 
         node n;
         forall_nodes(n, g) {
             
-            point pn = node_position[n];
-            point pf = node_force[n];
+            point pn = node_position[n]; //Position von Node n
+            point pf = node_force[n]; // Kraft wirkend auf Node n
 
-            double new_x = pn.xcoord() + DELTA * pf.xcoord();
-            double new_y = pn.ycoord() + DELTA * pf.ycoord();
+            double new_x = pn.xcoord() + DELTA * pf.xcoord(); // Neue X-Koordinate von Node n
+            double new_y = pn.ycoord() + DELTA * pf.ycoord(); // Neue Y-Koordinate von Node n
 
-            node_position[n] = point(new_x, new_y);
-            if (visualize % VISUALIZE == 0 || total_force < force_stop) {
-                gw.set_position(n, node_position[n]);
+            node_position[n] = point(new_x, new_y); // Neue Position von Node n
+            if (visualize % VISUALIZE == 0 || total_force < force_stop) { // Visualisiere nur jede <VISUALIZE> Runde
+                gw.set_position(n, node_position[n]); // Beim Visualisieren werden die neuen Nodepositionen auch in GraphWin gesetzt
             }
         }
 
-        if ((visualize % VISUALIZE == 0 || total_force < force_stop) && g.number_of_nodes() > 15) {
-            gw.set_animation_steps(0);
+        if ((visualize % VISUALIZE == 0 || total_force < force_stop) && g.number_of_nodes() > 15) { // Bei Graphen mit mehr als 15 Nodes wird ein Zoom durchgeführt
+            gw.set_animation_steps(4); // Schnellere Animation für Zoomen
             gw.zoom_graph();
-            gw.set_animation_steps(40);
+            gw.set_animation_steps(40); // Langsamere Animation für Repositionierung
         }
 
-        visualize++;
+        visualize++; // inkrementiere visualize
 
         p(total_force);
-    } while (total_force > force_stop);
+    } while (total_force > force_stop); // Abbruchbedingung, falls force_stop von der Gesamtkraft unterschritten wird
 
 
     if (new_node != NULL) {
-        gw.del_node(new_node);
+        gw.del_node(new_node); //Entferne die zusätzliche Node, die die Komponenten miteinander verbindet
     }
 
 

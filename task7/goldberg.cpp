@@ -15,7 +15,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0  //Wartezeit
+#define WAIT 2  //Wartezeit
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -46,6 +46,110 @@ using leda::gw_edge_dir;
 using leda::gw_font_type;
 using leda::roman_font;
 using leda::bold_font;
+
+
+// iterative function to conduct breadth-first-search (bfs);
+// parameters:
+//    v: current node
+//    g: graph to be searched in (as reference)
+//    gw: Diplaying window of graph (as reference)
+//    distance: distance from starting node
+void bfs(node v, graph &g, GraphWin &gw, node_array<int> &bfsnum, int &distance, edge_array<double> &flow, edge_array<double> &capacity) {
+
+    queue<node> fifo_queue;    // queue for next bfs node
+
+    fifo_queue.push(v); // add the starting node
+    
+    gw.set_user_label(v, string("%d (%d)", distance, bfsnum[v]));  // Display bfs number
+    gw.set_color(v, red);                           // Color node in red
+    gw.redraw();                                  // Update displayed graph
+    control_wait(WAIT);                              // Wait for 0.5 sec 
+    distance++;
+
+
+    // loop through all queue elements and add all childs to queue
+    // also add some graphical hints
+    do {
+
+        v = fifo_queue.pop(); // pop first element of search queue
+        gw.set_color(v, green); // current node of queue, mark it green
+        control_wait(WAIT); // Wait for 0.5sec
+
+        edge e;
+        forall_in_edges(e, v) {  // all neighbour nodes of v
+            if (flow[e] != capacity[e]) {
+                node w = g.opposite(v, e); // neighbour node on the other side of edge e
+                if (bfsnum[w] < 0) { // if node w has not been visited yet
+                    bfsnum[w] = bfsnum[v]+1; // assign to current node last assigned bfs number incremented by one
+                    gw.set_color(e, red);     // color edge in red     
+                    gw.set_color(w, red);	// color node in red
+                    gw.set_width(e, 2);           
+                    gw.set_user_label(w, string("%d (%d)", distance++, bfsnum[w])); // display order first, in brackets distance to starting node
+                    fifo_queue.append(w); // add the child node to the queue
+                    control_wait(WAIT);             // Wait for 0.5 sec 
+                } else {    // if node w has already been visited
+                    if (bfsnum[w] < bfsnum[v]) { // Backward edge
+                        if (gw.get_color(e) == red){ // check, if edge is the connection between parent and child node
+			                gw.set_color(e, blue); // color edge in blue
+			                gw.set_width(e, 2);
+			                control_wait(WAIT); // wait for 0.5 sec
+		                }
+                    } else { // edge to a node in queue
+                        gw.set_color(e, green); // color edge 
+                        gw.set_width(e, 2);
+                        control_wait(WAIT); // wait for 0.5 sec
+                    }
+                }
+            } else {
+                gw.set_color(e, violet);
+                control_wait(WAIT);
+            }
+        }
+        gw.set_color(v, blue); // Color node in blue
+        control_wait(WAIT); // wait for 0.5 sec
+        gw.redraw();
+	    // Update displayed graph (to ensure correct updation)
+    } while (!fifo_queue.empty());  // loop until queue is empty
+}
+
+
+
+
+void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
+    
+    queue<node> fifo_queue;
+
+    edge_array<double> capacity(g);
+    edge_array<double> flow(g, 0);
+    node_array<double> height(g);
+
+    // get capacity from the edges
+    edge e;
+    forall_edges(e, g) { 
+        string s = gw.get_user_label(e);
+        leda::string_istream I(s);
+        I >> capacity[e];
+    }
+
+    // init flow from source to neighbours
+    forall_out_edges(e, source_node) {
+
+        node opposite_node = g.opposite(source_node, e);
+
+        flow[e] = capacity[e];
+
+        if (opposite_node != target_node) {
+            fifo_queue.append(opposite_node);
+        }
+    }
+
+    // init height
+    node_array<int> bfsnum(g, -1);
+    bfsnum[target_node] = 0;
+    int distance = 0;
+    bfs(target_node, g, gw, bfsnum, distance, flow, capacity);
+
+}
 
 
 // Main program

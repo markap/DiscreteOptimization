@@ -14,7 +14,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0.1  //Wartezeit
+#define WAIT 0  //Wartezeit
 #define VISUALIZE 15 //Anzahl der Runden, nach denen visualisiert wird
 #define FORCE_STOP 0.5 //zur Berechnung der Abbruchbedingung
 
@@ -95,14 +95,12 @@ void dfs(node parent, node v, graph &g, GraphWin &gw, node_array<int> &dfsnum, i
 }
 
 
-double f_zero_x(int xv, int xu, int yv, int yu) { // F0 in x-Richtung berechnen
-    double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2);
+double f_zero_x(double squared_euclidean_metric, int xv, int xu, int yv, int yu) { // F0 in x-Richtung berechnen
     return (C0/squared_euclidean_metric) * ((xv - xu)/sqrt(squared_euclidean_metric));
 }
 
 
-double f_zero_y(int xv, int xu, int yv, int yu) { // F0 in y-Richtung berechnen
-    double squared_euclidean_metric = pow(xv - xu, 2) + pow(yv -yu, 2);
+double f_zero_y(double squared_euclidean_metric, int xv, int xu, int yv, int yu) { // F0 in y-Richtung berechnen
     return (C0/squared_euclidean_metric) * ((yv - yu)/sqrt(squared_euclidean_metric));
 }
 
@@ -173,8 +171,10 @@ void springembedder(graph &g, GraphWin &gw) {
         }
 
         gw.update_graph(); // update Graph
-		control_wait(0.7);
+    } else {
+        gw.message(string("Graph is connected"));
     }
+    control_wait(0.7);
 
     edge e;
     forall_edges(e, g) {
@@ -217,10 +217,11 @@ void springembedder(graph &g, GraphWin &gw) {
                     double vy = pv.ycoord();	 // Y-Koordinate von Node v
 
                     // clipping
-                    if (distance(vx, ux, vy, uy) < D_SQUARED) { // Durch Clipping werden nur Nodes innerhalb der Distanz 400 berücksichtigt
+                    double squared_euclidean_metric = distance(vx, ux, vy, uy);
+                    if (squared_euclidean_metric < D_SQUARED) { // Durch Clipping werden nur Nodes innerhalb der Distanz 400 berücksichtigt
 
-                        x_force += f_zero_x(vx, ux, vy, uy);  //Addiere F0 zur Kraft wirkend in X-Richtung auf Node v
-                        y_force += f_zero_y(vx, ux, vy, uy);  //Addiere F0 zur Kraft wirkend in Y-Richtung auf Node v
+                        x_force += f_zero_x(squared_euclidean_metric, vx, ux, vy, uy);  //Addiere F0 zur Kraft wirkend in X-Richtung auf Node v
+                        y_force += f_zero_y(squared_euclidean_metric, vx, ux, vy, uy);  //Addiere F0 zur Kraft wirkend in Y-Richtung auf Node v
                     } else {
                         p("clipping"); // Es wird geclippt.
                     }
@@ -275,9 +276,9 @@ void springembedder(graph &g, GraphWin &gw) {
         }
 
         if ((visualize % VISUALIZE == 0 || total_force < force_stop) && g.number_of_nodes() > 15) { // Bei Graphen mit mehr als 15 Nodes wird ein Zoom durchgeführt
-            gw.set_animation_steps(4); // Schnellere Animation für Zoomen
+            gw.set_animation_steps(1); // Schnellere Animation für Zoomen
             gw.zoom_graph();
-            gw.set_animation_steps(40); // Langsamere Animation für Repositionierung
+            gw.set_animation_steps(20); // Langsamere Animation für Repositionierung
         }
 
         visualize++; // inkrementiere visualize

@@ -37,7 +37,7 @@ Bold edges are matched, while thin edges are unmatched, nodes and edges are colo
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0
+#define WAIT 0.7
 
 int max = 0;
 int transformed = 0;
@@ -206,9 +206,11 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node,int &nu
     }
     int augmenting_path_length=0;
     for (node nodeiterator = target_node;nodeiterator!=start_node;nodeiterator=from[nodeiterator]){
-          augmenting_path_length+=inmutual_weight[from_edge[nodeiterator]];
-	  p(string("New augmenting path length is %d", augmenting_path_length));
-}
+        gw.set_color(from_edge[nodeiterator], violet); 
+        augmenting_path_length+=inmutual_weight[from_edge[nodeiterator]];
+	    p(string("New augmenting path length is %d", augmenting_path_length));
+        control_wait(WAIT);
+    }
 
     // Inverts the path
     if (max ==0){ 
@@ -217,7 +219,7 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node,int &nu
     } else {
         gw.message(string ("Now longest augmenting path is being inverted. Its length is %d", augmenting_path_length));
         gw2.message(string ("Now longest augmenting path is being inverted. Its length is %d", augmenting_path_length));
-}
+    }
     control_wait(WAIT); // wait 
     edge_array<int> in_path(g, 0); // shortest/longest edge path 
     node next_node = target_node;

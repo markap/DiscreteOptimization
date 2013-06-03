@@ -16,21 +16,14 @@
 #include "control.h" // Control window (adjusting speed etc.)
 
 #define WAIT 0 
-#define VISUALIZE 70 
+#define VISUALIZE 30 
 #define FORCE_STOP 0.5
 
-// 2000 0.15 50
 
 #define C0 2700//4//1 
 #define C1 0.2//2//6 
-#define L 50//85//120
-<<<<<<< HEAD
-#define DELTA 0.8
-#define D 500
-=======
 #define DELTA 0.7
 #define D 400
->>>>>>> fc8cb7102ea37b1ff4affa8fcc22ab2659bcdc92
 double len;
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
@@ -261,7 +254,7 @@ void springembedder(graph &g, GraphWin &gw) {
 
         total_force = x_force_global + y_force_global;
 
-        gw.message(string("round %d, x force is %.1f, y force is %.1f", visualize, x_force_global, y_force_global));
+        gw.message(string("iteration %d, total force is %.1f, done if force is smaller than  %.1f", visualize, total_force, force_stop));
 
         node n;
         forall_nodes(n, g) {
@@ -279,7 +272,9 @@ void springembedder(graph &g, GraphWin &gw) {
         }
 
         if ((visualize % VISUALIZE == 0 || total_force < force_stop) && g.number_of_nodes() > 15) {
+            gw.set_animation_steps(0);
             gw.zoom_graph();
+            gw.set_animation_steps(40);
         }
 
         visualize++;
@@ -309,7 +304,7 @@ int main(int argc, char *argv[]) {
     gw.display(); // Display window on the screen
     create_control(); // Display control window
     gw.set_directed(false); // use undirected graph presentation
-    gw.set_animation_steps(2);
+    gw.set_animation_steps(40);
 
     if (argc > 1) {    // falls Name als Parameter, Graph laden
         gw.read(argv[1]);

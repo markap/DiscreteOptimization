@@ -57,7 +57,17 @@ using leda::gw_font_type;
 using leda::roman_font;
 using leda::bold_font;
 
-
+// rekursive Funktion zur Realisierung der Tiefensuche und Bestimmung der Komponenten (dfs);
+// Parameter:
+//    parent: Knoten, von dem aus der aktuelle Knoten besucht wird
+//            (parent == v, falls der aktuelle Knoten der Startknoten ist)
+//    v: aktueller Knoten
+//    g: zu durchsuchender Graph (als Referenz)
+//    gw: Darstellungsfenster des Graphen (als Referenz)
+//    dfsnum: Feld zur Zuordnung von DFS-Nummern zu Knoten (als Referenz)
+//    akt: nächste freie Nummer (als Referenz)
+//	  components: Zuordnung der Nodes auf jeweilige Komponente
+//	  index: Komponentenindex
 void dfs(node parent, node v, graph &g, GraphWin &gw, node_array<int> &dfsnum, int &akt, node_array<int> &components, int &index) {
     
 	gw.message(string("DFS to investigate if graph is composed of subcomponents")); // Informiere Benutzer
@@ -125,7 +135,10 @@ double distance(int xv, int xu, int yv, int yu) { //euklidische Distanz^2 berech
     return pow(xv - xu, 2) + pow(yv -yu, 2);
 }
 
-
+//Springembedder zur Verschiebung der Nodes je nach wirkenden Kräften
+// 		Parameter:
+//   		 g: zu bearbeitender Graph (als Referenz)
+//   		 gw: Darstellungsfenster des Graphen (als Referenz)			
 void springembedder(graph &g, GraphWin &gw) {
     
 

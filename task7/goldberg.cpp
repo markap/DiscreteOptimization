@@ -122,6 +122,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
     edge_array<double> capacity(g);
     edge_array<double> flow(g, 0);
     node_array<double> height(g);
+    node_array<double> height(g);
 
     // get capacity from the edges
     edge e;

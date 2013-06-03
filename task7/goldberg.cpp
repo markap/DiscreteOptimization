@@ -15,7 +15,8 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 2  //Wartezeit
+#define WAIT 0.1  //Wartezeit
+#define WAIT_LONGER 5  //Wartezeit
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -46,6 +47,8 @@ using leda::gw_edge_dir;
 using leda::gw_font_type;
 using leda::roman_font;
 using leda::bold_font;
+using leda::gw_node_shape;
+using leda::rectangle_node;
 
 
 // iterative function to conduct breadth-first-search (bfs);
@@ -85,7 +88,6 @@ void bfs(node v, graph &g, GraphWin &gw, node_array<int> &height, int &distance,
                     gw.set_color(w, red);	// color node in red
                     gw.set_width(e, 2);           
                     gw.set_user_label(w, string("%d (%d)", distance++, height[w])); // display order first, in brackets distance to starting node
-                    height[w] = distance;
                     fifo_queue.append(w); // add the child node to the queue
                     control_wait(WAIT);             // Wait for 0.5 sec 
                 } else {    // if node w has already been visited
@@ -139,6 +141,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
 
         if (opposite_node != target_node) {
             fifo_queue.append(opposite_node);
+            gw.set_border_width(opposite_node, 5);
         }
     }
 
@@ -163,76 +166,123 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             current_excess += flow[e];
         }
         excess[n] = current_excess;
+        
+        gw.set_user_label(n, string("%.0f (%d)", excess[n], height[n]));
+        gw.set_color(n, orange);
     }
 
+
+    // display edges user labels
+    forall_edges(e, g) {
+        gw.set_user_label(e, string("%.0f/%.0f", flow[e], capacity[e]));
+        gw.set_color(e, orange);
+    }
+
+    gw.redraw();
+
+    control_wait(WAIT_LONGER);
 
     do {
         node current_node = fifo_queue.pop(); 
 
+        gw.set_color(current_node, violet);
+        control_wait(WAIT_LONGER);
+        
 
         if (excess[current_node] > 0) {
+            p("suche nach ausgehenden");
             // check ob es zulässige ausgehende kante gibt
-            int push = 0;
             edge e;
             forall_out_edges(e, current_node) {
+                gw.set_color(e, red);
+                control_wait(WAIT_LONGER);
                 if (excess[current_node] > 0) {
                     node opposite_node = g.opposite(current_node, e);
+                    double opposite_excess = excess[opposite_node];
                     if (flow[e] < capacity[e] && height[current_node] == height[opposite_node] + 1) {
-                        push = 1;
+                        gw.set_color(e, violet);
+                        gw.set_color(opposite_node, violet);
+                        control_wait(WAIT_LONGER);
+
                         // push 
                         // vorwärtskante
                         double min;
                         double res_capacity = capacity[e] - flow[e];
-                        min = std::min(current_excess, res_capacity);
+                        min = std::min(excess[current_node], res_capacity);
                         flow[e] = flow[e] + min;
 
 
-                        excess[v] = excess[v] - min;
+                        excess[current_node] = excess[current_node] - min;
                         excess[opposite_node] = excess[opposite_node] + min;
 
-                        if (excess[opposite_node] > 0) {
+                        gw.set_user_label(e, string("%.0f/%.0f", flow[e], capacity[e]));
+                        gw.set_user_label(current_node, string("%.0f (%d)", excess[current_node], height[current_node]));
+                        gw.set_user_label(opposite_node, string("%.0f (%d)", excess[opposite_node], height[opposite_node]));
+
+                        p("höhe ist");
+                        p(height[current_node]);
+                        p(height[opposite_node]);
+
+
+                        if (opposite_excess <= 0 && excess[opposite_node] > 0 && opposite_node != target_node && opposite_node != source_node) {
                             fifo_queue.append(opposite_node);
+                            gw.set_border_width(opposite_node, 5);
                         }
                     }
             
                 } else {
                     break;
                 } 
+                control_wait(WAIT_LONGER);
+
             }
         }
 
         if (excess[current_node] > 0) {
             // check ob es zulässige ausgehende kante gibt
-            int push = 0;
+            p("suche nach ausgehenden");
             edge e;
-            forall_out_edges(e, current_node) {
+            forall_in_edges(e, current_node) {
+                gw.set_color(e, red);
+                control_wait(WAIT_LONGER);
                 if (excess[current_node] > 0) {
                     node opposite_node = g.opposite(current_node, e);
+                    double opposite_excess = excess[opposite_node];
                     if (flow[e] >= capacity[e] && height[current_node] == height[opposite_node] + 1) {
-                        push = 1;
+                        gw.set_color(e, violet);
+                        gw.set_color(current_node, violet);
+
                         // push 
                         // rückwärtskante
                         double res_capacity = flow[e];
-                        double min = std::min(current_excess, res_capacity);
+                        double min = std::min(excess[current_node], res_capacity);
                         
                         flow[e] = flow[e] - min;
 
-                        excess[v] = excess[v] - min;
+                        excess[current_node] = excess[current_node] - min;
                         excess[opposite_node] = excess[opposite_node] + min;
 
-                        if (excess[opposite_node] > 0) {
+                        gw.set_user_label(e, string("%.0f/%.0f", flow[e], capacity[e]));
+                        gw.set_user_label(current_node, string("%.0f (%d)", excess[current_node], height[current_node]));
+                        gw.set_user_label(opposite_node, string("%.0f (%d)", excess[opposite_node], height[opposite_node]));
+
+                        if (opposite_excess <= 0 && excess[opposite_node] > 0 && opposite_node != target_node && opposite_node != source_node) {
                             fifo_queue.append(opposite_node);
+                            
+                            gw.set_border_width(opposite_node, 5);
                         }
                     }
             
                 } else {
                     break;
                 } 
+                control_wait(WAIT_LONGER);
             }
 
         }
 
-        if (excess[current_node] > 0 && push == 0) {  // relabel
+        if (excess[current_node] > 0) {  // relabel
+            gw.acknowledge("relabel");
             double min = numeric_limits<double>::infinity();
             //check for edge in residue graph
             forall_out_edges(e, current_node) {
@@ -258,13 +308,26 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             }
             height[current_node] = min;
 
+            gw.set_user_label(current_node, string("%.0f (%d)", excess[current_node], height[current_node]));
+
             fifo_queue.append(current_node);
 
+        } else {
+            gw.set_border_width(current_node, 1);
         }
+
+        gw.set_color(current_node, orange);
+        control_wait(WAIT_LONGER);
 
 
 
     } while(!fifo_queue.empty());
+
+    forall_edges(e, g) {
+        gw.set_user_label(e, string("%.1f", flow[e]));
+    }
+
+    gw.redraw();
 
 }
 
@@ -298,6 +361,8 @@ int main(int argc, char *argv[]) {
         gw.set_label_type(v, user_label);    // User-Label anzeigen (statt Index-Label)
         gw.set_color(v, yellow);
 
+        gw.set_shape(v, rectangle_node);
+        gw.set_width(v, 100);
     }
 
 

@@ -54,13 +54,13 @@ using leda::bold_font;
 //    g: graph to be searched in (as reference)
 //    gw: Diplaying window of graph (as reference)
 //    distance: distance from starting node
-void bfs(node v, graph &g, GraphWin &gw, node_array<int> &bfsnum, int &distance, edge_array<double> &flow, edge_array<double> &capacity) {
+void bfs(node v, graph &g, GraphWin &gw, node_array<int> &height, int &distance, edge_array<double> &flow, edge_array<double> &capacity) {
 
     queue<node> fifo_queue;    // queue for next bfs node
 
     fifo_queue.push(v); // add the starting node
     
-    gw.set_user_label(v, string("%d (%d)", distance, bfsnum[v]));  // Display bfs number
+    gw.set_user_label(v, string("%d (%d)", distance, height[v]));  // Display bfs number
     gw.set_color(v, red);                           // Color node in red
     gw.redraw();                                  // Update displayed graph
     control_wait(WAIT);                              // Wait for 0.5 sec 
@@ -79,16 +79,17 @@ void bfs(node v, graph &g, GraphWin &gw, node_array<int> &bfsnum, int &distance,
         forall_in_edges(e, v) {  // all neighbour nodes of v
             if (flow[e] != capacity[e]) {
                 node w = g.opposite(v, e); // neighbour node on the other side of edge e
-                if (bfsnum[w] < 0) { // if node w has not been visited yet
-                    bfsnum[w] = bfsnum[v]+1; // assign to current node last assigned bfs number incremented by one
+                if (height[w] < 0) { // if node w has not been visited yet
+                    height[w] = height[v]+1; // assign to current node last assigned bfs number incremented by one
                     gw.set_color(e, red);     // color edge in red     
                     gw.set_color(w, red);	// color node in red
                     gw.set_width(e, 2);           
-                    gw.set_user_label(w, string("%d (%d)", distance++, bfsnum[w])); // display order first, in brackets distance to starting node
+                    gw.set_user_label(w, string("%d (%d)", distance++, height[w])); // display order first, in brackets distance to starting node
+                    height[w] = distance;
                     fifo_queue.append(w); // add the child node to the queue
                     control_wait(WAIT);             // Wait for 0.5 sec 
                 } else {    // if node w has already been visited
-                    if (bfsnum[w] < bfsnum[v]) { // Backward edge
+                    if (height[w] < height[v]) { // Backward edge
                         if (gw.get_color(e) == red){ // check, if edge is the connection between parent and child node
 			                gw.set_color(e, blue); // color edge in blue
 			                gw.set_width(e, 2);
@@ -113,16 +114,13 @@ void bfs(node v, graph &g, GraphWin &gw, node_array<int> &bfsnum, int &distance,
 }
 
 
-
-
 void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
     
     queue<node> fifo_queue;
 
     edge_array<double> capacity(g);
     edge_array<double> flow(g, 0);
-    node_array<double> height(g);
-    node_array<double> height(g);
+    node_array<int> height(g, -1);
 
     // get capacity from the edges
     edge e;
@@ -145,10 +143,75 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
     }
 
     // init height
-    node_array<int> bfsnum(g, -1);
-    bfsnum[target_node] = 0;
+    height[target_node] = 0;
+    height[source_node] = g.number_of_nodes();
     int distance = 0;
-    bfs(target_node, g, gw, bfsnum, distance, flow, capacity);
+    bfs(target_node, g, gw, height, distance, flow, capacity);
+
+
+    // init excess
+    node_array<double> excess(g);
+    node n;
+    forall_nodes(n, g) {
+        double current_excess = 0;
+        // wahrscheinlich vorher schon speichern!!!
+        edge e;
+        forall_out_edges(e, current_node) {
+            current_excess -= flow[e];
+        }
+        forall_in_edges(e, current_node) {
+            current_excess += flow[e];
+        }
+        excess[n] = current_excess;
+    }
+
+
+    do {
+        node current_node = fifo_queue.pop(); 
+
+
+        if (current_excess > 0) {
+            // check ob es zulässige ausgehende kante gibt
+            int push = 0;
+            edge e;
+            forall_out_edges(e, current_node) {
+                node opposite_node = g.opposite(current_node, e);
+                if (flow[e] < capacity[e] && height[current_node] == height[opposite_node] + 1) {
+                    push = 1;
+                    // push 
+                    // vorwärtskante
+                    double min;
+                    if (capacity[e] > flow[e]) {
+                        double res_capacity = capacity[e] - flow[e];
+                        min = std::min(current_excess, res_capacity);
+                        flow[e] = flow[e] + min;
+
+
+                    } else { // rückwärtskante
+                        double res_capacity = flow[e];
+                        min = std::min(current_excess, res_capacity);
+                        
+                        flow[e] = flow[e] - min;
+                    }
+
+                    excess[v] = excess[v] - min;
+                    excess[opposite_node] = excess[opposite_node] + min;
+
+                    if (excess[opposite_node] > 0) {
+                        fifo_queue.append(opposite_node);
+                    }
+                }
+            
+            }
+
+            if (push == 0) {  // relabel
+
+            }
+        }
+
+
+
+    } while(!fifo_queue.empty());
 
 }
 

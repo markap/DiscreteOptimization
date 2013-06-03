@@ -156,10 +156,10 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
         double current_excess = 0;
         // wahrscheinlich vorher schon speichern!!!
         edge e;
-        forall_out_edges(e, current_node) {
+        forall_out_edges(e, n) {
             current_excess -= flow[e];
         }
-        forall_in_edges(e, current_node) {
+        forall_in_edges(e, n) {
             current_excess += flow[e];
         }
         excess[n] = current_excess;
@@ -170,43 +170,96 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
         node current_node = fifo_queue.pop(); 
 
 
-        if (current_excess > 0) {
+        if (excess[current_node] > 0) {
             // check ob es zulässige ausgehende kante gibt
             int push = 0;
             edge e;
             forall_out_edges(e, current_node) {
-                node opposite_node = g.opposite(current_node, e);
-                if (flow[e] < capacity[e] && height[current_node] == height[opposite_node] + 1) {
-                    push = 1;
-                    // push 
-                    // vorwärtskante
-                    double min;
-                    if (capacity[e] > flow[e]) {
+                if (excess[current_node] > 0) {
+                    node opposite_node = g.opposite(current_node, e);
+                    if (flow[e] < capacity[e] && height[current_node] == height[opposite_node] + 1) {
+                        push = 1;
+                        // push 
+                        // vorwärtskante
+                        double min;
                         double res_capacity = capacity[e] - flow[e];
                         min = std::min(current_excess, res_capacity);
                         flow[e] = flow[e] + min;
 
 
-                    } else { // rückwärtskante
+                        excess[v] = excess[v] - min;
+                        excess[opposite_node] = excess[opposite_node] + min;
+
+                        if (excess[opposite_node] > 0) {
+                            fifo_queue.append(opposite_node);
+                        }
+                    }
+            
+                } else {
+                    break;
+                } 
+            }
+        }
+
+        if (excess[current_node] > 0) {
+            // check ob es zulässige ausgehende kante gibt
+            int push = 0;
+            edge e;
+            forall_out_edges(e, current_node) {
+                if (excess[current_node] > 0) {
+                    node opposite_node = g.opposite(current_node, e);
+                    if (flow[e] >= capacity[e] && height[current_node] == height[opposite_node] + 1) {
+                        push = 1;
+                        // push 
+                        // rückwärtskante
                         double res_capacity = flow[e];
-                        min = std::min(current_excess, res_capacity);
+                        double min = std::min(current_excess, res_capacity);
                         
                         flow[e] = flow[e] - min;
+
+                        excess[v] = excess[v] - min;
+                        excess[opposite_node] = excess[opposite_node] + min;
+
+                        if (excess[opposite_node] > 0) {
+                            fifo_queue.append(opposite_node);
+                        }
                     }
+            
+                } else {
+                    break;
+                } 
+            }
 
-                    excess[v] = excess[v] - min;
-                    excess[opposite_node] = excess[opposite_node] + min;
+        }
 
-                    if (excess[opposite_node] > 0) {
-                        fifo_queue.append(opposite_node);
+        if (excess[current_node] > 0 && push == 0) {  // relabel
+            double min = numeric_limits<double>::infinity();
+            //check for edge in residue graph
+            forall_out_edges(e, current_node) {
+                if (flow[e] < capacity[e]) {
+                    node opposite_node = g.opposite(e, current_node); 
+                    double current_min = height[opposite_node] + 1;
+                    if (current_min < min) {
+                        min = current_min;
                     }
                 }
-            
-            }
-
-            if (push == 0) {  // relabel
 
             }
+
+            forall_in_edges(e, current_node) {
+                if (flow[e] >= capacity[e]) {
+                    node opposite_node = g.opposite(e, current_node); 
+                    double current_min = height[opposite_node] + 1;
+                    if (current_min < min) {
+                        min = current_min;
+                    }
+
+                }
+            }
+            height[current_node] = min;
+
+            fifo_queue.append(current_node);
+
         }
 
 

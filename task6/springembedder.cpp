@@ -1,3 +1,12 @@
+// Animation von Springembedder
+// Beginnend mit einer DFS, um die einzelnen Komponenten des Graphen zu ermitteln
+// (unbesuchter Teil wird gelb (Default) angezeigt, erledigter Teil blau,
+// noch in Bearbeitung befindlicher Teil rot, Rückwärtskanten grün)
+// Falls nicht zusammenhänged, wird ein temporärer Verbindungsknoten eingefügt
+// Anschließend wird solang der Springembedder Algorithmus ausgeführt, bis die Gesamtkraft gegen 0 geht
+// (abhängig von Anzahl der Knoten und Anzalh der Kanten)
+
+
 #include <iostream>
 #include <math.h>
 #include <climits>

@@ -15,7 +15,7 @@
 #include "control.h" // Control window (adjusting speed etc.)
 
 #define WAIT 0  //Wartezeit
-#define VISUALIZE 15 //Anzahl der Runden, nach denen visualisiert wird
+#define VISUALIZE 25 //Anzahl der Runden, nach denen visualisiert wird
 #define FORCE_STOP 0.5 //zur Berechnung der Abbruchbedingung
 
 

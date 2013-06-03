@@ -19,8 +19,10 @@
 #define FORCE_STOP 0.5 //zur Berechnung der Abbruchbedingung
 
 
-#define C0 2700 //
-#define C1 0.2 // Federkonstante, je größer 
+#define C0 2700 // gibt an, wie stark sich zwei Knoten abstoßen
+#define C1 0.2 // Federkonstante, je größer der Wert, ge größer die Anziehung bei einer Distanz größer der Federlänge und je größer die Abstoßung bei einer Distanz kleiner der Federlänge
+// Quotient von C0/C1 = 13.500, damit die Verschiebung der Nodes im Graphen ein akzeptables Ergebnis abwirft
+// Wir setzen den Faktor zur Abstoßung C0 gemessen zur Anziehung durch C1 also sehr viel größer
 #define DELTA 0.7 // "Stärke" der Kraft, wie stark beeinflussen F0 und F1 die Neupositionierung von einer Node, je größer je stärker wird die Node verschoben
 #define D_SQUARED 16000 // Maximale Distanz zum Quadrat, bei der Kraft zwischen Nodes noch berücksichtigt wird
 #define L 35 // Länge der Feder, legt den Abstand zwischen Nodes fest, an dem sich der resultierende Graph orientiert
@@ -58,7 +60,7 @@ using leda::bold_font;
 
 void dfs(node parent, node v, graph &g, GraphWin &gw, node_array<int> &dfsnum, int &akt, node_array<int> &components, int &index) {
     
-    gw.message(string("DFS to investigate if graph is composed of subcomponents")); // Informiere Benutzer
+	gw.message(string("DFS to investigate if graph is composed of subcomponents")); // Informiere Benutzer
 
 	
 	dfsnum[v] = akt++;                              // DFS-Nummer zuweisen

@@ -6,12 +6,9 @@ By default this is set to minimum.
 For the illustration of the algorithm two Graphwin windows are used:
 
 1)The first one showing the appliance of dijkstra's algorithm and inverting the minimum/maximum paths
- 
- visited part is displayed in yellow (default), completed nodes and edges belonging to shortest paths in blue,
- nodes and their corresponding edges in the priority queue in red
- edges which were regarded as minimum/maximum edge but are not after an update anymore are displayed in green
- as well as edges which are not minimum/maximum when you try to add them
- The shortest/longest path is colored in orange
+
+ The shortest/longest path is colored in violet
+ Inverted edges are illustrated in orange
 
 
 2)The second one depicting the progress of the found matchings in the graph

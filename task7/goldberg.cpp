@@ -34,6 +34,7 @@ using leda::green;
 using leda::yellow;
 using leda::black;
 using leda::violet;
+using leda::cyan;
 using leda::string;
 using leda::queue;
 using leda::list;
@@ -194,7 +195,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             // check ob es zulässige ausgehende kante gibt
             edge e;
             forall_out_edges(e, current_node) {
-                gw.set_color(e, red);
+                gw.set_color(e,cyan);
                 control_wait(WAIT_LONGER);
                 if (excess[current_node] > 0) {
                     node opposite_node = g.opposite(current_node, e);
@@ -243,14 +244,14 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             p("suche nach ausgehenden");
             edge e;
             forall_in_edges(e, current_node) {
-                gw.set_color(e, red);
+                gw.set_color(e, brown);
                 control_wait(WAIT_LONGER);
                 if (excess[current_node] > 0) {
                     node opposite_node = g.opposite(current_node, e);
                     double opposite_excess = excess[opposite_node];
                     if (flow[e] >= capacity[e] && height[current_node] == height[opposite_node] + 1) {
-                        gw.set_color(e, violet);
-                        gw.set_color(current_node, violet);
+                        gw.set_color(e, blue);
+                        gw.set_color(current_node, blue);
 
                         // push 
                         // rückwärtskante
@@ -284,9 +285,11 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
         if (excess[current_node] > 0) {  // relabel
             gw.acknowledge("relabel");
             double min = numeric_limits<double>::infinity();
+            gw.set_color(current_node, red);
             //check for edge in residue graph
             forall_out_edges(e, current_node) {
                 if (flow[e] < capacity[e]) {
+		    gw.set_color(e, cyan);				
                     node opposite_node = g.opposite(e, current_node); 
                     double current_min = height[opposite_node] + 1;
                     if (current_min < min) {

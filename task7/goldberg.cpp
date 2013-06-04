@@ -16,7 +16,7 @@
 #include "control.h" // Control window (adjusting speed etc.)
 
 #define WAIT 0.1  //Wartezeit
-#define WAIT_LONGER 0.2  //Wartezeit
+#define WAIT_LONGER 0.7  //Wartezeit
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -60,6 +60,8 @@ using leda::rectangle_node;
 //    gw: Diplaying window of graph (as reference)
 //    distance: distance from starting node
 void bfs(node v, graph &g, GraphWin &gw, node_array<int> &height, int &distance, edge_array<double> &flow, edge_array<double> &capacity) {
+
+    p("start with a bfs to determine the height");
 
     queue<node> fifo_queue;    // queue for next bfs node
 
@@ -186,7 +188,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
 
     int round = 0;
     do {
-        gw.message(string("round is %d", round));
+        //gw.message(string("round is %d", round));
         p("round ...");
         p(round++);
 
@@ -198,6 +200,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
 
         if (excess[current_node] > 0) {
             p("suche nach ausgehenden");
+            gw.message("push");
             // check ob es zulässige ausgehende kante gibt
             edge e;
             forall_out_edges(e, current_node) {
@@ -261,8 +264,9 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
                 if (excess[current_node] > 0) {
                     double opposite_excess = excess[opposite_node];
                     if (flow[e] > 0 && height[current_node] == height[opposite_node] + 1) {
-                        gw.set_color(e, blue);
-                        gw.set_color(current_node, blue);
+                        gw.set_color(e, violet);
+                        gw.set_color(opposite_node, cyan);
+                        control_wait(WAIT_LONGER);
 
                         // push 
                         // rückwärtskante
@@ -297,10 +301,10 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
         }
 
         if (excess[current_node] > 0) {  // relabel
-            gw.acknowledge("relabel");
-            int min = 4000;//numeric_limits<int>::infinity();
+            int min = 40000;//numeric_limits<int>::infinity();
             p(min);
             p("relabel");
+            gw.message("relabel");
             gw.set_color(current_node, red);
 	
             control_wait(WAIT_LONGER);
@@ -390,7 +394,7 @@ int main(int argc, char *argv[]) {
         gw.set_color(v, yellow);
 
         gw.set_shape(v, rectangle_node);
-        gw.set_width(v, 100);
+        gw.set_width(v, 90);
     }
 
 
@@ -401,12 +405,16 @@ int main(int argc, char *argv[]) {
     }
 
     // Nutzer darf start node wählen
+    gw.message("Please pick your source node");
     node source_node;
     while ((source_node = gw.read_node()) == NULL);
 
     // Nutzer darf target node wählen
+    gw.message("Please pick your target node");
     node target_node;
-    while ((target_node = gw.read_node()) == NULL);
+    do {
+        while ((target_node = gw.read_node()) == NULL);
+    } while(target_node == source_node);
 
 
     goldberg(g, gw, source_node, target_node);

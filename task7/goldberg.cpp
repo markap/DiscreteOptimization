@@ -35,6 +35,7 @@ using leda::yellow;
 using leda::black;
 using leda::violet;
 using leda::cyan;
+using leda::brown;
 using leda::string;
 using leda::queue;
 using leda::list;
@@ -232,8 +233,10 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
                     }
             
                 } else {
+		    gw.set_color(e,orange);
                     break;
-                } 
+                }
+		gw.set_color(e, orange); 
                 control_wait(WAIT_LONGER);
 
             }
@@ -275,8 +278,10 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
                     }
             
                 } else {
+		    gw.set_color(e, orange);
                     break;
                 } 
+		gw.set_color(e, orange);
                 control_wait(WAIT_LONGER);
             }
 
@@ -286,7 +291,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             gw.acknowledge("relabel");
             double min = numeric_limits<double>::infinity();
             gw.set_color(current_node, red);
-            //check for edge in residue graph
+            //check for edge in residual graph
             forall_out_edges(e, current_node) {
                 if (flow[e] < capacity[e]) {
 		    gw.set_color(e, cyan);				
@@ -295,17 +300,20 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
                     if (current_min < min) {
                         min = current_min;
                     }
+		    gw.set_color(e,orange);
                 }
 
             }
 
             forall_in_edges(e, current_node) {
                 if (flow[e] >= capacity[e]) {
+		    gw.set_color(e, cyan);
                     node opposite_node = g.opposite(e, current_node); 
                     double current_min = height[opposite_node] + 1;
                     if (current_min < min) {
                         min = current_min;
                     }
+		    gw.set_color(e, orange);
 
                 }
             }

@@ -209,7 +209,7 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node,int &nu
         gw.set_color(from_edge[nodeiterator], violet); 
         augmenting_path_length+=inmutual_weight[from_edge[nodeiterator]];
 	    p(string("New augmenting path length is %d", augmenting_path_length));
-        control_wait(WAIT);
+        //control_wait(WAIT);
     }
 
     // Inverts the path

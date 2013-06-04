@@ -318,13 +318,14 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
         }
 
         if (excess[current_node] > 0) {  // relabel
-            int min = 40000;//numeric_limits<int>::infinity();
-            p(min);
+
+            int min = numeric_limits<int>::max();
             p("relabel");
             gw.message("relabel");
             gw.set_color(current_node, red);
             control_wait(WAIT_LONGER);
             node min_node;
+            edge min_edge;
 
             //check for edge in residual graph
             forall_out_edges(e, current_node) {
@@ -337,6 +338,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
                     if (current_min < min) {
                         min = current_min;
                         min_node = opposite_node;
+                        min_edge = e;
                         p("1 min adjustment");
                     }
                 }
@@ -354,6 +356,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
                         min = current_min;
                         p("1 min adjustment");
                         min_node = opposite_node;
+                        min_edge = e;
                     }
 
                 }
@@ -361,12 +364,15 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             height[current_node] = min;
 
             gw.set_color(min_node, cyan);
+            gw.set_color(min_edge, violet);
 
             gw.set_user_label(current_node, string("%.0f (%d)", excess[current_node], height[current_node]));
 
             control_wait(WAIT_LONGER);
 
             fifo_queue.append(current_node);
+            gw.set_color(min_node, orange);
+            gw.set_color(min_edge, orange);
 
         } else {
             gw.set_border_width(current_node, 1);
@@ -384,8 +390,6 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
 
 // Main program
 int main(int argc, char *argv[]) {
-     int bl = numeric_limits<int>::max();
-     p(bl);
 
     // Create window for illustrating the graph with size 800 x 600 
     GraphWin gw(800, 600);

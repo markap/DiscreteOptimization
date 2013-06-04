@@ -247,7 +247,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             p("suche nach ausgehenden");
             edge e;
             forall_in_edges(e, current_node) {
-                gw.set_color(e, brown);
+                gw.set_color(e, cyan);
                 control_wait(WAIT_LONGER);
                 if (excess[current_node] > 0) {
                     node opposite_node = g.opposite(current_node, e);
@@ -291,6 +291,8 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             gw.acknowledge("relabel");
             double min = numeric_limits<double>::infinity();
             gw.set_color(current_node, red);
+	
+        control_wait(WAIT_LONGER);
             //check for edge in residual graph
             forall_out_edges(e, current_node) {
                 if (flow[e] < capacity[e]) {

@@ -16,7 +16,7 @@
 #include "control.h" // Control window (adjusting speed etc.)
 
 #define WAIT 0.1  //Wartezeit
-#define WAIT_LONGER 0.7  //Wartezeit
+#define WAIT_LONGER 0.5  //Wartezeit
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -61,7 +61,7 @@ using leda::rectangle_node;
 //    distance: distance from starting node
 void bfs(node v, graph &g, GraphWin &gw, node_array<int> &height, int &distance, edge_array<double> &flow, edge_array<double> &capacity) {
 
-    p("start with a bfs to determine the height");
+    gw.message("start with a bfs to determine the height");
 
     queue<node> fifo_queue;    // queue for next bfs node
 
@@ -171,7 +171,13 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
         }
         excess[n] = current_excess;
         
-        gw.set_user_label(n, string("%.0f (%d)", excess[n], height[n]));
+        if (n == target_node) {
+            gw.set_user_label(n, string("t (%d)", height[n]));
+        } else if (n == source_node) {
+            gw.set_user_label(n, string("s (%d)", height[n]));
+        } else {
+            gw.set_user_label(n, string("%.0f (%d)", excess[n], height[n]));
+        }         
         gw.set_color(n, orange);
     }
 
@@ -180,6 +186,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
     forall_edges(e, g) {
         gw.set_user_label(e, string("%.0f/%.0f", flow[e], capacity[e]));
         gw.set_color(e, orange);
+        gw.set_width(e, 2);
     }
 
     gw.redraw();
@@ -206,8 +213,6 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             forall_out_edges(e, current_node) {
                 p("next edge");
                 node opposite_node = g.opposite(current_node, e);
-                gw.set_color(e,cyan);
-                control_wait(WAIT_LONGER);
                 if (excess[current_node] > 0) {
                     double opposite_excess = excess[opposite_node];
                     if (flow[e] < capacity[e] && height[current_node] == height[opposite_node] + 1) {
@@ -228,7 +233,14 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
 
                         gw.set_user_label(e, string("%.0f/%.0f", flow[e], capacity[e]));
                         gw.set_user_label(current_node, string("%.0f (%d)", excess[current_node], height[current_node]));
-                        gw.set_user_label(opposite_node, string("%.0f (%d)", excess[opposite_node], height[opposite_node]));
+
+                        if (opposite_node == target_node) {
+                            gw.set_user_label(opposite_node, string("t (%d)", height[opposite_node]));
+                        } else if (opposite_node == source_node) {
+                            gw.set_user_label(opposite_node, string("s (%d)", height[opposite_node]));
+                        } else {
+                            gw.set_user_label(opposite_node, string("%.0f (%d)", excess[opposite_node], height[opposite_node]));
+                        }
 
                         p("höhe ist");
                         p(height[current_node]);
@@ -259,8 +271,6 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             forall_in_edges(e, current_node) {
                 node opposite_node = g.opposite(current_node, e);
                 p("next edge");
-                gw.set_color(e, cyan);
-                control_wait(WAIT_LONGER);
                 if (excess[current_node] > 0) {
                     double opposite_excess = excess[opposite_node];
                     if (flow[e] > 0 && height[current_node] == height[opposite_node] + 1) {
@@ -280,7 +290,14 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
 
                         gw.set_user_label(e, string("%.0f/%.0f", flow[e], capacity[e]));
                         gw.set_user_label(current_node, string("%.0f (%d)", excess[current_node], height[current_node]));
-                        gw.set_user_label(opposite_node, string("%.0f (%d)", excess[opposite_node], height[opposite_node]));
+                        if (opposite_node == target_node) {
+                            gw.set_user_label(opposite_node, string("t (%d)", height[opposite_node]));
+                        } else if (opposite_node == source_node) {
+                            gw.set_user_label(opposite_node, string("s (%d)", height[opposite_node]));
+                        } else {
+                            gw.set_user_label(opposite_node, string("%.0f (%d)", excess[opposite_node], height[opposite_node]));
+                        }
+
 
                         if (opposite_excess <= 0 && excess[opposite_node] > 0 && opposite_node != target_node && opposite_node != source_node) {
                             fifo_queue.append(opposite_node);
@@ -306,23 +323,22 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             p("relabel");
             gw.message("relabel");
             gw.set_color(current_node, red);
-	
             control_wait(WAIT_LONGER);
+            node min_node;
+
             //check for edge in residual graph
             forall_out_edges(e, current_node) {
                 if (flow[e] < capacity[e]) {
                     p("1 found edge");
-		            gw.set_color(e, cyan);				
-                    control_wait(WAIT_LONGER);
                     node opposite_node = g.opposite(e, current_node); 
                     int current_min = height[opposite_node] + 1;
                     p(current_min);
                     p(min);
                     if (current_min < min) {
                         min = current_min;
+                        min_node = opposite_node;
                         p("1 min adjustment");
                     }
-		            gw.set_color(e,orange);
                 }
 
             }
@@ -330,8 +346,6 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             forall_in_edges(e, current_node) {
                 if (flow[e] > 0) {
                     p("1 found edge");
-		            gw.set_color(e, cyan);
-                    control_wait(WAIT_LONGER);
                     node opposite_node = g.opposite(e, current_node); 
                     int current_min = height[opposite_node] + 1;
                     p(current_min);
@@ -339,14 +353,18 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
                     if (current_min < min) {
                         min = current_min;
                         p("1 min adjustment");
+                        min_node = opposite_node;
                     }
-		            gw.set_color(e, orange);
 
                 }
             }
             height[current_node] = min;
 
+            gw.set_color(min_node, cyan);
+
             gw.set_user_label(current_node, string("%.0f (%d)", excess[current_node], height[current_node]));
+
+            control_wait(WAIT_LONGER);
 
             fifo_queue.append(current_node);
 
@@ -366,6 +384,8 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
 
 // Main program
 int main(int argc, char *argv[]) {
+     int bl = numeric_limits<int>::max();
+     p(bl);
 
     // Create window for illustrating the graph with size 800 x 600 
     GraphWin gw(800, 600);
@@ -405,12 +425,10 @@ int main(int argc, char *argv[]) {
     }
 
     // Nutzer darf start node wählen
-    gw.message("Please pick your source node");
     node source_node;
     while ((source_node = gw.read_node()) == NULL);
 
     // Nutzer darf target node wählen
-    gw.message("Please pick your target node");
     node target_node;
     do {
         while ((target_node = gw.read_node()) == NULL);

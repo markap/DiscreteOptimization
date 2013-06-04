@@ -96,10 +96,11 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node,int &nu
     }
 
 //inital node and edge coloring in yellow before each run of dijsktra
-    node ndx;
+  node ndx;
     forall_nodes(ndx, g) {
         gw.set_color(ndx, yellow);
     }
+
     edge edg;
     forall_edges(edg, g) {
         gw.set_color(edg, cyan);
@@ -177,16 +178,16 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node,int &nu
               //  p(edge_weight[e]);
               //  p(d);
               //  gw.set_user_label(n, string("%.0f", d)); // show current distance in node visible for user during runtime
-                gw.redraw();
+ //               gw.redraw();
               //  control_wait(WAIT);
                 
             } else if (distance[n] > d) {// if node has already been inserted in priority queue
             //with a distance higher than the distance from current node then update its priority value
-                p("update");
+//                p("update");
                 prio_queue.decrease_p(n, d);// update priority value to lower distance
                 distance[n] = d; // update distance
-                p(distance[n]);
-                p(edge_weight[e]);
+  //              p(distance[n]);
+    //            p(edge_weight[e]);
                // gw.set_user_label(n, string("%.0f", d)); // update distance shown in node as user label
                // gw.set_color(e, red); // color node in red as it is still being processed
                // gw.set_color(from_edge[n], green); // color previous parent edge in green as it has already been processed
@@ -208,8 +209,8 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node,int &nu
     for (node nodeiterator = target_node;nodeiterator!=start_node;nodeiterator=from[nodeiterator]){
         gw.set_color(from_edge[nodeiterator], violet); 
         augmenting_path_length+=inmutual_weight[from_edge[nodeiterator]];
-	    p(string("New augmenting path length is %d", augmenting_path_length));
-        control_wait(WAIT);
+//	    p(string("New augmenting path length is %d", augmenting_path_length));
+//        control_wait(WAIT);
     }
 
     // Inverts the path
@@ -254,8 +255,8 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node,int &nu
                 gw2.redraw();
             //} 
 
-            p("add w");
-            p(inmutual_weight[next_edge]);
+//            p("add w");
+//            p(inmutual_weight[next_edge]);
             weight_count += inmutual_weight[next_edge]; //Adjust the weight of current minimum/maximum matching
         } else {
             matching[next_edge] = 0;
@@ -267,8 +268,8 @@ int dijkstra(graph &g, GraphWin &gw, node &start_node, node &target_node,int &nu
             //}
 
             weight_count -= inmutual_weight[next_edge];//Adjust the weight of current minimum/maximum matching
-            p("remove w");
-            p(inmutual_weight[next_edge]);
+//            p("remove w");
+//            p(inmutual_weight[next_edge]);
         }
         control_wait(WAIT);
     }
@@ -400,13 +401,13 @@ void weightedmatching(graph &g, GraphWin &gw, leda::GRAPH<node, edge> &h, GraphW
     edge_array<int> matching(g, 0);// matched edges
     double weight_count = 0; // weight count of current matching with minimum/maximum weight
 
-    p("out nodes");
-    p(g.outdeg(source_node));
+   // p("out nodes");
+   // p(g.outdeg(source_node));
     while (1) {
         int done = dijkstra(g, gw, source_node, target_node,number_of_edges_matched, edge_weight, matching, inmutual_weight, weight_count, h, gw2);
 
-        p("weight_count");
-        p(weight_count);
+//        p("weight_count");
+//        p(weight_count);
         if (max == 1) { // on both graphwin windows print out maximum weight count
             gw.message(string("maximum weight is %.1f. Number of edges matched is %d.", weight_count, number_of_edges_matched));
             gw2.message(string("maximum weight is %.1f. Number of edges matched is %d.", weight_count, number_of_edges_matched));
@@ -418,7 +419,7 @@ void weightedmatching(graph &g, GraphWin &gw, leda::GRAPH<node, edge> &h, GraphW
         if (done == 0) { // end algorithm
 
             edge edx;
-            p("sum is");
+     //       p("sum is");
             forall_edges(edx, g) {
                 if (matching[edx] == 1) {
                     p(gw2.get_user_label(edx));
@@ -502,7 +503,7 @@ int main(int argc, char *argv[]) {
     node v;
     forall_nodes(v, g) {
         gw.set_label_type(v, user_label);    // User-Label anzeigen (statt Index-Label)
-        gw.set_color(v, yellow);
+//        gw.set_color(v, yellow);
 
         //node n = gw2.new_node(gw.get_position(v));
         //gw2.set_label_type(h[n], user_label);    
@@ -525,7 +526,7 @@ int main(int argc, char *argv[]) {
 
     edge e;
     forall_edges(e, g) {
-        gw.set_color(e, yellow);
+        gw.set_color(e,cyan );
 
         //node source = g.source(e);
         //node target = g.target(e);

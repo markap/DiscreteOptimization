@@ -260,7 +260,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
                 control_wait(WAIT_LONGER);
                 if (excess[current_node] > 0) {
                     double opposite_excess = excess[opposite_node];
-                    if (flow[e] >= capacity[e] && height[current_node] == height[opposite_node] + 1) {
+                    if (flow[e] > 0 && height[current_node] == height[opposite_node] + 1) {
                         gw.set_color(e, blue);
                         gw.set_color(current_node, blue);
 
@@ -298,7 +298,9 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
 
         if (excess[current_node] > 0) {  // relabel
             gw.acknowledge("relabel");
-            int min = numeric_limits<int>::infinity();
+            int min = 4000;//numeric_limits<int>::infinity();
+            p(min);
+            p("relabel");
             gw.set_color(current_node, red);
 	
             control_wait(WAIT_LONGER);
@@ -309,7 +311,9 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
 		            gw.set_color(e, cyan);				
                     control_wait(WAIT_LONGER);
                     node opposite_node = g.opposite(e, current_node); 
-                    double current_min = height[opposite_node] + 1;
+                    int current_min = height[opposite_node] + 1;
+                    p(current_min);
+                    p(min);
                     if (current_min < min) {
                         min = current_min;
                         p("1 min adjustment");
@@ -320,12 +324,14 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             }
 
             forall_in_edges(e, current_node) {
-                if (flow[e] >= capacity[e]) {
+                if (flow[e] > 0) {
                     p("1 found edge");
 		            gw.set_color(e, cyan);
                     control_wait(WAIT_LONGER);
                     node opposite_node = g.opposite(e, current_node); 
-                    double current_min = height[opposite_node] + 1;
+                    int current_min = height[opposite_node] + 1;
+                    p(current_min);
+                    p(min);
                     if (current_min < min) {
                         min = current_min;
                         p("1 min adjustment");
@@ -350,12 +356,6 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
 
 
     } while(!fifo_queue.empty());
-
-    forall_edges(e, g) {
-        gw.set_user_label(e, string("%.1f", flow[e]));
-    }
-
-    gw.redraw();
 
 }
 

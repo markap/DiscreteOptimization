@@ -1,3 +1,11 @@
+//Goldberg-Tarjan algorithm to find maximal flow in a directed graph
+
+// nodes in active node queue are displayed in bold
+// all nodes are by default depicted in orange
+
+
+
+
 
 #include <iostream>
 #include <math.h>
@@ -58,7 +66,10 @@ using leda::rectangle_node;
 //    v: current node
 //    g: graph to be searched in (as reference)
 //    gw: Diplaying window of graph (as reference)
+//    height: Node array with all heights
 //    distance: distance from starting node
+//    flow: Edge array with all preflows
+//    capacity: Edge array with all capacities
 void bfs(node v, graph &g, GraphWin &gw, node_array<int> &height, int &distance, edge_array<double> &flow, edge_array<double> &capacity) {
 
     gw.message("start with a bfs to determine the height");
@@ -101,7 +112,9 @@ void bfs(node v, graph &g, GraphWin &gw, node_array<int> &height, int &distance,
 			                gw.set_width(e, 2);
 			                control_wait(WAIT); // wait for 0.5 sec
 		                }
-                    } else { // edge to a node in queue
+                         else {
+                             gw.set_color(e, green);
+                   } } else { // edge to a node in queue
                         gw.set_color(e, green); // color edge 
                         gw.set_width(e, 2);
                         control_wait(WAIT); // wait for 0.5 sec
@@ -119,14 +132,19 @@ void bfs(node v, graph &g, GraphWin &gw, node_array<int> &height, int &distance,
     } while (!fifo_queue.empty());  // loop until queue is empty
 }
 
-
+//function to run goldberg algorith
+//parameters:
+//      graph: graph to be searched in (as reference)
+//      gw: displayed window (as reference)
+//      source_node: source node
+//      target_node: target node
 void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
     
-    queue<node> fifo_queue;
+    queue<node> fifo_queue;                     // Queue with active nodes
 
-    edge_array<double> capacity(g);
-    edge_array<double> flow(g, 0);
-    node_array<int> height(g, -1);
+    edge_array<double> capacity(g);             // saves capacity of edges
+    edge_array<double> flow(g, 0);              // saves pre-flow of edges
+    node_array<int> height(g, -1);              // height of the nodes
 
     // get capacity from the edges
     edge e;
@@ -137,6 +155,35 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
     }
 
     // init flow from source to neighbours
+
+
+    // init height
+    height[target_node] = 0; // assign height 0 to target node
+   
+    int distance = 0;
+    bfs(target_node, g, gw, height, distance, flow, capacity); // run bfs
+
+    //Nodes that cannot reach target node are deleted
+    node n;
+
+   
+    forall_nodes(n, g) {
+
+        if (height[n] == -1) {
+            if (n == source_node) {
+                gw.message(string("Maximum flow is 0! There is no connection between source and target node."));
+                return;
+            }
+            g.del_node(n);
+        }
+       
+    }
+
+    height[source_node] = g.number_of_nodes(); // assign height equal to number of nodes to source node
+   
+
+    // for all edges directed away from source node set the pre-flow to the capacity flow
+    
     forall_out_edges(e, source_node) {
 
         node opposite_node = g.opposite(source_node, e);
@@ -148,20 +195,12 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             gw.set_border_width(opposite_node, 5);
         }
     }
-
-    // init height
-    height[target_node] = 0;
-    height[source_node] = g.number_of_nodes();
-    int distance = 0;
-    bfs(target_node, g, gw, height, distance, flow, capacity);
-
-
     // init excess
-    node_array<double> excess(g);
-    node n;
-    forall_nodes(n, g) {
+    node_array<double> excess(g); // nodes array to save excess of all nodes
+   
+    forall_nodes(n, g) { // compute the excess for all nodes in graph
         double current_excess = 0;
-        // wahrscheinlich vorher schon speichern!!!
+        
         edge e;
         forall_out_edges(e, n) {
             current_excess -= flow[e];
@@ -199,13 +238,13 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
         p("round ...");
         p(round++);
 
-        node current_node = fifo_queue.pop(); 
+        node current_node = fifo_queue.pop(); // pop node from active node queue
 
         gw.set_color(current_node, violet);
         control_wait(WAIT_LONGER);
         
-
-        if (excess[current_node] > 0) {
+       // Conduct push phase
+        if (excess[current_node] > 0) {// only consider active nodes
             p("suche nach ausgehenden");
             gw.message("push");
             // check ob es zulässige ausgehende kante gibt
@@ -215,25 +254,26 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
                 node opposite_node = g.opposite(current_node, e);
                 if (excess[current_node] > 0) {
                     double opposite_excess = excess[opposite_node];
-                    if (flow[e] < capacity[e] && height[current_node] == height[opposite_node] + 1) {
+                    if (flow[e] < capacity[e] && height[current_node] == height[opposite_node] + 1) {//condition for push
                         gw.set_color(e, violet);
                         gw.set_color(opposite_node, cyan);
                         control_wait(WAIT_LONGER);
 
                         // push 
-                        // vorwärtskante
+                        // forward edge
                         double min;
-                        double res_capacity = capacity[e] - flow[e];
-                        min = std::min(excess[current_node], res_capacity);
-                        flow[e] = flow[e] + min;
+                        double res_capacity = capacity[e] - flow[e]; // compute residual capacity
+                        min = std::min(excess[current_node], res_capacity);//calculate delta 
+                        flow[e] = flow[e] + min;// calculate new preflow
 
 
-                        excess[current_node] = excess[current_node] - min;
-                        excess[opposite_node] = excess[opposite_node] + min;
+                        excess[current_node] = excess[current_node] - min;//update excess
+                        excess[opposite_node] = excess[opposite_node] + min;// update excess
 
                         gw.set_user_label(e, string("%.0f/%.0f", flow[e], capacity[e]));
                         gw.set_user_label(current_node, string("%.0f (%d)", excess[current_node], height[current_node]));
 
+                        // update user labels
                         if (opposite_node == target_node) {
                             gw.set_user_label(opposite_node, string("t (%d)", height[opposite_node]));
                         } else if (opposite_node == source_node) {
@@ -246,13 +286,13 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
                         p(height[current_node]);
                         p(height[opposite_node]);
 
-
-                        if (opposite_excess <= 0 && excess[opposite_node] > 0 && opposite_node != target_node && opposite_node != source_node) {
+                        // only node w to active node queue if active and neither target nor source node
+                        if (opposite_excess <= 0 && excess[opposite_node] > 0 && opposite_node != target_node && opposite_node != source_node){
                             fifo_queue.append(opposite_node);
                             gw.set_border_width(opposite_node, 5);
                         }
                     }
-            
+            //update depicted colors
                 } else {
 		            gw.set_color(e,orange);
                     break;
@@ -263,7 +303,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
 
             }
         }
-
+// backward edge
         if (excess[current_node] > 0) {
             // check ob es zulässige ausgehende kante gibt
             p("suche nach eingehenden");
@@ -273,21 +313,22 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
                 p("next edge");
                 if (excess[current_node] > 0) {
                     double opposite_excess = excess[opposite_node];
-                    if (flow[e] > 0 && height[current_node] == height[opposite_node] + 1) {
+                    if (flow[e] > 0 && height[current_node] == height[opposite_node] + 1) {//condition for push
                         gw.set_color(e, violet);
                         gw.set_color(opposite_node, cyan);
                         control_wait(WAIT_LONGER);
 
                         // push 
-                        // rückwärtskante
-                        double res_capacity = flow[e];
-                        double min = std::min(excess[current_node], res_capacity);
+                        // backward edge
+                        double res_capacity = flow[e];// compute residual capacity
+                        double min = std::min(excess[current_node], res_capacity);// calculate delta
                         
-                        flow[e] = flow[e] - min;
+                        flow[e] = flow[e] - min;// update pre flow
 
-                        excess[current_node] = excess[current_node] - min;
-                        excess[opposite_node] = excess[opposite_node] + min;
-
+                        excess[current_node] = excess[current_node] - min;// update excess
+                        excess[opposite_node] = excess[opposite_node] + min;//update excess
+                        
+                        // update user labels
                         gw.set_user_label(e, string("%.0f/%.0f", flow[e], capacity[e]));
                         gw.set_user_label(current_node, string("%.0f (%d)", excess[current_node], height[current_node]));
                         if (opposite_node == target_node) {
@@ -298,7 +339,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
                             gw.set_user_label(opposite_node, string("%.0f (%d)", excess[opposite_node], height[opposite_node]));
                         }
 
-
+                        // condition for appending to active node queue
                         if (opposite_excess <= 0 && excess[opposite_node] > 0 && opposite_node != target_node && opposite_node != source_node) {
                             fifo_queue.append(opposite_node);
                             
@@ -317,9 +358,9 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
 
         }
 
-        if (excess[current_node] > 0) {  // relabel
+        if (excess[current_node] > 0) {  // relabelling
 
-            int min = numeric_limits<int>::max();
+            int min = numeric_limits<int>::max();// set inital value to integer max value to find minimum height
             p("relabel");
             gw.message("relabel");
             gw.set_color(current_node, red);
@@ -328,6 +369,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             edge min_edge;
 
             //check for edge in residual graph
+            //find edge with minimal height
             forall_out_edges(e, current_node) {
                 if (flow[e] < capacity[e]) {
                     p("1 found edge");
@@ -335,7 +377,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
                     int current_min = height[opposite_node] + 1;
                     p(current_min);
                     p(min);
-                    if (current_min < min) {
+                    if (current_min < min) {// if there is a lower height
                         min = current_min;
                         min_node = opposite_node;
                         min_edge = e;
@@ -361,7 +403,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
 
                 }
             }
-            height[current_node] = min;
+            height[current_node] = min;// update height of current with minimal height found +1
 
             gw.set_color(min_node, cyan);
             gw.set_color(min_edge, violet);
@@ -383,7 +425,16 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
 
 
 
-    } while(!fifo_queue.empty());
+    } while(!fifo_queue.empty());// run algorithm until active node queue is empty
+
+    //Compute maximum flow
+    int maximum_flow = 0;
+
+    forall_in_edges(e, target_node) {
+        maximum_flow += flow[e];
+    } 
+    gw.message(string("Maximum flow is %d", maximum_flow));   
+
 
 }
 

@@ -23,8 +23,8 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0.1  //Wartezeit
-#define WAIT_LONGER 0.5  //Wartezeit
+#define WAIT 0  //Wartezeit
+#define WAIT_LONGER 0  //Wartezeit
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -111,10 +111,10 @@ void bfs(node v, graph &g, GraphWin &gw, node_array<int> &height, int &distance,
 			                gw.set_color(e, blue); // color edge in blue
 			                gw.set_width(e, 2);
 			                control_wait(WAIT); // wait for 0.5 sec
-		                }
-                         else {
+		                } else {
                              gw.set_color(e, green);
-                   } } else { // edge to a node in queue
+                        } 
+                    } else { // edge to a node in queue
                         gw.set_color(e, green); // color edge 
                         gw.set_width(e, 2);
                         control_wait(WAIT); // wait for 0.5 sec
@@ -155,35 +155,7 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
     }
 
     // init flow from source to neighbours
-
-
-    // init height
-    height[target_node] = 0; // assign height 0 to target node
-   
-    int distance = 0;
-    bfs(target_node, g, gw, height, distance, flow, capacity); // run bfs
-
-    //Nodes that cannot reach target node are deleted
-    node n;
-
-   
-    forall_nodes(n, g) {
-
-        if (height[n] == -1) {
-            if (n == source_node) {
-                gw.message(string("Maximum flow is 0! There is no connection between source and target node."));
-                return;
-            }
-            g.del_node(n);
-        }
-       
-    }
-
-    height[source_node] = g.number_of_nodes(); // assign height equal to number of nodes to source node
-   
-
     // for all edges directed away from source node set the pre-flow to the capacity flow
-    
     forall_out_edges(e, source_node) {
 
         node opposite_node = g.opposite(source_node, e);
@@ -195,7 +167,35 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
             gw.set_border_width(opposite_node, 5);
         }
     }
-    // init excess
+
+
+    // init height
+    height[target_node] = 0; // assign height 0 to target node
+   
+    int distance = 0;
+    bfs(target_node, g, gw, height, distance, flow, capacity); // run bfs
+
+    //Nodes that cannot reach target node are deleted
+    node n;
+
+    node_array<int> delteted_nodes(g, 0);
+   
+    forall_nodes(n, g) {
+
+        if (height[n] == -1 && n != source_node) {
+            gw.del_node(n);
+            delteted_nodes[n] = 1;
+        }
+       
+    }
+
+    gw.update_graph();
+
+
+    height[source_node] = g.number_of_nodes(); // assign height equal to number of nodes to source node
+   
+
+        // init excess
     node_array<double> excess(g); // nodes array to save excess of all nodes
    
     forall_nodes(n, g) { // compute the excess for all nodes in graph
@@ -239,6 +239,10 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
         p(round++);
 
         node current_node = fifo_queue.pop(); // pop node from active node queue
+
+        if (delteted_nodes[current_node] == 1) {
+            continue;
+        }
 
         gw.set_color(current_node, violet);
         control_wait(WAIT_LONGER);

@@ -27,7 +27,7 @@
 #include "control.h" // Control window (adjusting speed etc.)
 
 #define WAIT 0  //Wartezeit
-#define WAIT_LONGER 0  //Wartezeit
+#define WAIT_LONGER 0.5  //Wartezeit
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -81,10 +81,10 @@ void bfs(node v, graph &g, GraphWin &gw, node_array<int> &height, int &distance,
 
     fifo_queue.push(v); // add the starting node
     
-    gw.set_user_label(v, string("%d (%d)", distance, height[v]));  // Display bfs number
-    gw.set_color(v, red);                           // Color node in red
-    gw.redraw();                                  // Update displayed graph
-    control_wait(WAIT);                              // Wait for 0.5 sec 
+    //gw.set_user_label(v, string("%d (%d)", distance, height[v]));  // Display bfs number
+    //gw.set_color(v, red);                           // Color node in red
+    //gw.redraw();                                  // Update displayed graph
+    //control_wait(WAIT);                              // Wait for 0.5 sec 
     distance++;
 
 
@@ -93,8 +93,8 @@ void bfs(node v, graph &g, GraphWin &gw, node_array<int> &height, int &distance,
     do {
 
         v = fifo_queue.pop(); // pop first element of search queue
-        gw.set_color(v, green); // current node of queue, mark it green
-        control_wait(WAIT); // Wait for 0.5sec
+        //gw.set_color(v, green); // current node of queue, mark it green
+        //control_wait(WAIT); // Wait for 0.5sec
 
         edge e;
         forall_in_edges(e, v) {  // all neighbour nodes of v
@@ -102,35 +102,35 @@ void bfs(node v, graph &g, GraphWin &gw, node_array<int> &height, int &distance,
                 node w = g.opposite(v, e); // neighbour node on the other side of edge e
                 if (height[w] < 0) { // if node w has not been visited yet
                     height[w] = height[v]+1; // assign to current node last assigned bfs number incremented by one
-                    gw.set_color(e, red);     // color edge in red     
-                    gw.set_color(w, red);	// color node in red
-                    gw.set_width(e, 2);           
-                    gw.set_user_label(w, string("%d (%d)", distance++, height[w])); // display order first, in brackets distance to starting node
+                    //gw.set_color(e, red);     // color edge in red     
+                    //gw.set_color(w, red);	// color node in red
+                    //gw.set_width(e, 2);           
+                    //gw.set_user_label(w, string("%d (%d)", distance++, height[w])); // display order first, in brackets distance to starting node
                     fifo_queue.append(w); // add the child node to the queue
-                    control_wait(WAIT);             // Wait for 0.5 sec 
+                    //control_wait(WAIT);             // Wait for 0.5 sec 
                 } else {    // if node w has already been visited
                     if (height[w] < height[v]) { // Backward edge
-                        if (gw.get_color(e) == red){ // check, if edge is the connection between parent and child node
-			                gw.set_color(e, blue); // color edge in blue
-			                gw.set_width(e, 2);
-			                control_wait(WAIT); // wait for 0.5 sec
-		                } else {
-                             gw.set_color(e, green);
-                        } 
+                        //if (gw.get_color(e) == red){ // check, if edge is the connection between parent and child node
+			            //    gw.set_color(e, blue); // color edge in blue
+			                //gw.set_width(e, 2);
+			                //control_wait(WAIT); // wait for 0.5 sec
+		                //} else {
+                        //     gw.set_color(e, green);
+                        //} 
                     } else { // edge to a node in queue
-                        gw.set_color(e, green); // color edge 
-                        gw.set_width(e, 2);
-                        control_wait(WAIT); // wait for 0.5 sec
+                        //gw.set_color(e, green); // color edge 
+                        //gw.set_width(e, 2);
+                        //control_wait(WAIT); // wait for 0.5 sec
                     }
                 }
             } else {
-                gw.set_color(e, violet);
-                control_wait(WAIT);
+                //gw.set_color(e, violet);
+                //control_wait(WAIT);
             }
         }
-        gw.set_color(v, blue); // Color node in blue
-        control_wait(WAIT); // wait for 0.5 sec
-        gw.redraw();
+        //gw.set_color(v, blue); // Color node in blue
+        //control_wait(WAIT); // wait for 0.5 sec
+        //gw.redraw();
 	    // Update displayed graph (to ensure correct updation)
     } while (!fifo_queue.empty());  // loop until queue is empty
 }
@@ -200,6 +200,8 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
 
         // init excess
     node_array<double> excess(g); // nodes array to save excess of all nodes
+
+    gw.set_flush(false);
    
     forall_nodes(n, g) { // compute the excess for all nodes in graph
         double current_excess = 0;
@@ -231,9 +233,10 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
         gw.set_width(e, 2);
     }
 
+    gw.set_flush(true);
     gw.redraw();
 
-    control_wait(WAIT_LONGER);
+    control_wait(WAIT_LONGER * 3);
 
     int round = 0;
     do {
@@ -293,20 +296,20 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
                         p(height[current_node]);
                         p(height[opposite_node]);
 
-                        // only node w to active node queue if active and neither target nor source node
+                        // add only node w to active node queue if active and neither target nor source node
                         if (opposite_excess <= 0 && excess[opposite_node] > 0 && opposite_node != target_node && opposite_node != source_node){
                             fifo_queue.append(opposite_node);
                             gw.set_border_width(opposite_node, 5);
                         }
+		                gw.set_color(e, orange); 
+                        gw.set_color(opposite_node, orange);
+                        control_wait(WAIT_LONGER);
                     }
             //update depicted colors
                 } else {
 		            gw.set_color(e,orange);
                     break;
                 }
-		        gw.set_color(e, orange); 
-                gw.set_color(opposite_node, orange);
-                control_wait(WAIT_LONGER);
 
             }
         }
@@ -352,15 +355,15 @@ void goldberg(graph &g, GraphWin &gw, node &source_node, node &target_node) {
                             
                             gw.set_border_width(opposite_node, 5);
                         }
+		                gw.set_color(e, orange); 
+                        gw.set_color(opposite_node, orange);
+                        control_wait(WAIT_LONGER);
                     }
             
                 } else {
 		            gw.set_color(e, orange);
                     break;
                 } 
-		        gw.set_color(e, orange); 
-                gw.set_color(opposite_node, orange);
-                control_wait(WAIT_LONGER);
             }
 
         }
@@ -470,6 +473,8 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+    gw.set_flush(false);
+
     node v;
     forall_nodes(v, g) {
         gw.set_label_type(v, user_label);    // User-Label anzeigen (statt Index-Label)
@@ -485,6 +490,9 @@ int main(int argc, char *argv[]) {
         gw.set_color(e, yellow);
 
     }
+
+    gw.set_flush(true);
+    gw.redraw();
 
     // Nutzer darf start node wählen
     node source_node;

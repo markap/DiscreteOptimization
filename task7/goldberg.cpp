@@ -2,9 +2,12 @@
 
 // nodes in active node queue are displayed in bold
 // all nodes are by default depicted in orange
-
-
-
+// the currently investigated node is coloured in violet
+// current edge is coloured in violet
+// nodes that are currently in the active node queue are marked with a bold frame
+// the opposite node in the push phase which gets pushed some flow is depicted in cyan
+// while relabelling the corresponding nodes is depicted in red
+// the minimum neighbour node is coloured in cyan and the respective edge in violet 
 
 
 #include <iostream>

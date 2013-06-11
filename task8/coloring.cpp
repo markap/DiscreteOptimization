@@ -16,6 +16,7 @@
 #include "control.h" // Control window (adjusting speed etc.)
 
 #define WAIT 0.3  //Wartezeit
+#define COLOR_COUNT 7 
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -68,8 +69,7 @@ void coloring(graph &g, GraphWin &gw) {
     node_array<int> node_color(g, -1);
 
     
-    // todo better - perhaps for all nodes???
-    leda::color my_colors[7] = {red, violet, green, blue, orange, cyan, black};
+    leda::color my_colors[COLOR_COUNT] = {red, violet, green, blue, orange, cyan, black};
 
     node n;
     forall_nodes(n, g) {
@@ -77,8 +77,12 @@ void coloring(graph &g, GraphWin &gw) {
         gw.set_border_width(n, 10);
         control_wait(WAIT);
 
-        // todo better - perhaps for all nodes???
-        int free_colors[7] = {1,1,1,1,1,1,1};
+        int degree = g.degree(n);
+
+        int free_colors[degree];
+        for (int i = 0; i < degree; i++) {
+            free_colors[i] = 1;
+        }
         
         edge e;
         forall_inout_edges(e, n) {
@@ -104,7 +108,7 @@ void coloring(graph &g, GraphWin &gw) {
         }
 
         node_color[n] = next_color;
-        gw.set_color(n, my_colors[next_color]);
+        gw.set_color(n, my_colors[next_color % COLOR_COUNT]);
         p(next_color);
         gw.set_user_label(n, string("%d", next_color));
         gw.set_border_width(n, 1);

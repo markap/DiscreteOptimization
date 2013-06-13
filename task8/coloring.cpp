@@ -1,3 +1,11 @@
+// Greedy-Coloring 3 algorithm to colour the nodes of a planar graph 
+
+// Nodes that are not connected might be assigned the same colour. 
+// Colouring is illustrated through LEDA colours
+// This implementation uses 7 distinct colours. If more colours are required nodes with different colours 
+// can be distinguished through their user label which contains a distinct number for each colour.
+
+
 
 #include <iostream>
 #include <math.h>
@@ -53,57 +61,68 @@ using leda::gw_node_shape;
 using leda::rectangle_node;
 
 graph global_graph;
-int compare(const node &a, const node &b) {
+// function to compare degrees of two nodes a and b
+// parameters:
+//    	a: node a
+//		b: node b
+int compare(const node &a, const node &b) { //method to compare the degrees of two nodes
     return global_graph.degree(b) - global_graph.degree(a);
 }
 
-
+// iterative function to colour all nodes in a planar graph;
+// parameters:
+//    g: graph to be searched in (as reference)
+//    gw: Diplaying window of graph (as reference)
 void coloring(graph &g, GraphWin &gw) {
 
     int max_color = -1;
     
     global_graph = g;
-    g.sort_nodes(compare);
+    g.sort_nodes(compare); // all nodes are sorted in descending order according to their degrees
     
 
-    node_array<int> node_color(g, -1);
+    node_array<int> node_color(g, -1); // saves whether node has been assigned a colour
 
     
-    leda::color my_colors[COLOR_COUNT] = {red, violet, green, blue, orange, cyan, black};
+    leda::color my_colors[COLOR_COUNT] = {red, violet, green, blue, orange, cyan, black}; // usable colours
 
     node n;
-    forall_nodes(n, g) {
+    forall_nodes(n, g) {// for all nodes in graph g
 
         gw.set_border_width(n, 10);
         control_wait(WAIT);
 
         int degree = g.degree(n);
-
-        int free_colors[degree];
-        for (int i = 0; i < degree; i++) {
-            free_colors[i] = 1;
+		
+		
+		int number_of_nodes = g.number_of_nodes();
+		
+        int free_colors[number_of_nodes]; // colours which are still free to use
+        for (int i = 0; i < number_of_nodes; i++) { // 
+            free_colors[i] = 1; // colours, the node can take, are assigned 1
         }
+		
         
         edge e;
         forall_inout_edges(e, n) {
             node opposite_node = g.opposite(n, e);
-            if (node_color[opposite_node] != -1) {
-                free_colors[node_color[opposite_node]] = 0;
+            if (node_color[opposite_node] != -1) { // if neighbour node has already been assigned a colour
+                free_colors[node_color[opposite_node]] = 0; // node n cannot take the same colour as its neighbour node
             }
         }
-
-        int next_color = 0;
+		int next_color = 0;
         while (1) {
             p("check for ");
             p(next_color);
-            if (free_colors[next_color] == 1) {
+            if (free_colors[next_color] == 1) { //assign the next possible colour which is still free to use
                 break;
             }
-            next_color++;
+			
+            next_color++; // increment colour counter
         }
 
         if (next_color > max_color) {
-            max_color = next_color;
+            max_color = next_color; // save number of colours used
             gw.message(string("used colors %d", max_color + 1));
         }
 

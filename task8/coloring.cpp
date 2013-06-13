@@ -2,7 +2,7 @@
 
 // Nodes that are not connected might be assigned the same colour. 
 // Colouring is illustrated through LEDA colours
-// This implementation uses 7 distinct colours. If more colours are required nodes with different colours 
+// This implementation uses 16  distinct colours. If more colours are required nodes with different colours 
 // can be distinguished through their user label which contains a distinct number for each colour.
 
 

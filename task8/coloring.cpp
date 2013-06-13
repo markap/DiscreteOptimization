@@ -97,8 +97,8 @@ void coloring(graph &g, GraphWin &gw) {
 		
 		int number_of_nodes = g.number_of_nodes();
 		
-        int free_colors[number_of_nodes]; // colours which are still free to use
-        for (int i = 0; i < number_of_nodes; i++) { // 
+        int free_colors[degree+1]; // colours which are still free to use
+        for (int i = 0; i < degree +1; i++) { // 
             free_colors[i] = 1; // colours, the node can take, are assigned 1
         }
 		

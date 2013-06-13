@@ -24,7 +24,7 @@
 #include "control.h" // Control window (adjusting speed etc.)
 
 #define WAIT 0.3  //Wartezeit
-#define COLOR_COUNT 7 
+#define COLOR_COUNT 16 
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 
@@ -44,7 +44,14 @@ using leda::black;
 using leda::violet;
 using leda::cyan;
 using leda::brown;
+using leda::pink;
 using leda::string;
+using leda::white;
+using leda::green2;
+using leda::blue2;
+using leda::grey1;
+using leda::grey2;
+using leda::grey3;
 using leda::queue;
 using leda::list;
 using leda::node_pq;
@@ -84,7 +91,7 @@ void coloring(graph &g, GraphWin &gw) {
     node_array<int> node_color(g, -1); // saves whether node has been assigned a colour
 
     
-    leda::color my_colors[COLOR_COUNT] = {red, violet, green, blue, orange, cyan, black}; // usable colours
+    leda::color my_colors[COLOR_COUNT] = {yellow, brown, red, violet, green, blue, orange, cyan, black, white, pink, green2, blue2, grey1, grey2, grey3}; // usable colours
 
     node n;
     forall_nodes(n, g) {// for all nodes in graph g
@@ -95,7 +102,7 @@ void coloring(graph &g, GraphWin &gw) {
         int degree = g.degree(n);
 		
 		
-		int number_of_nodes = g.number_of_nodes();
+		
 		
         int free_colors[degree+1]; // colours which are still free to use
         for (int i = 0; i < degree +1; i++) { // 

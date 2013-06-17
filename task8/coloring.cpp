@@ -23,7 +23,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0.3  //Wartezeit
+#define WAIT 0.2  //Wartezeit
 #define COLOR_COUNT 16 
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
@@ -110,7 +110,7 @@ void coloring(graph &g, GraphWin &gw) {
         }
 		
         
-        edge e;
+            edge e;
         forall_inout_edges(e, n) {
             node opposite_node = g.opposite(n, e);
             if (node_color[opposite_node] != -1) { // if neighbour node has already been assigned a colour

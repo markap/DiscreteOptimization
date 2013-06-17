@@ -91,7 +91,7 @@ void coloring(graph &g, GraphWin &gw) {
     node_array<int> node_color(g, -1); // saves whether node has been assigned a colour
 
     
-    leda::color my_colors[COLOR_COUNT] = {yellow, brown, red, violet, green, blue, orange, cyan, black, white, pink, green2, blue2, grey1, grey2, grey3}; // usable colours
+    leda::color my_colors[COLOR_COUNT] = { brown, red, violet, green, blue, orange, cyan, black, white, pink, green2, blue2, grey1, grey2, grey3,yellow}; // usable colours
 
     node n;
     forall_nodes(n, g) {// for all nodes in graph g

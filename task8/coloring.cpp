@@ -23,7 +23,7 @@
 
 #include "control.h" // Control window (adjusting speed etc.)
 
-#define WAIT 0.3  //Wartezeit
+#define WAIT 0.2  //Wartezeit
 #define COLOR_COUNT 7 
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
@@ -94,8 +94,6 @@ void coloring(graph &g, GraphWin &gw) {
 
         int degree = g.degree(n);
 		
-		
-		int number_of_nodes = g.number_of_nodes();
 		
         int free_colors[degree+1]; // colours which are still free to use
         for (int i = 0; i < degree +1; i++) { // 

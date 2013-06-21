@@ -113,7 +113,7 @@ void tsp(int** matrix, int dimension) {
 
 
     // 2 - opt - what if start node is changed???
-    random_source random_number(0, dimension - 1);
+    random_source random_number(1, dimension - 1);
     int j = random_number();
     int k = random_number();
 
@@ -130,11 +130,12 @@ void tsp(int** matrix, int dimension) {
     node_order[j] = k_node;
     node_order[k] = j_node;
 
-    new_cost += matrix[node_order[j-1]][j_node];
-    new_cost += matrix[node_order[j+1]][j_node];
+    new_cost += matrix[node_order[j-1]][k_node];
+    new_cost += matrix[node_order[j+1]][k_node];
 
-    new_cost += matrix[node_order[k-1]][k_node];
-    new_cost += matrix[node_order[k+1]][k_node];
+    new_cost += matrix[node_order[k-1]][j_node];
+    new_cost += matrix[node_order[k+1]][j_node];
+
 
 
     for (int i = 0; i < dimension +1; i++) {

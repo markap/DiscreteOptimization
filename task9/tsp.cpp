@@ -19,7 +19,7 @@
 
 #include "control.h"
 
-#define TEMP 250.0
+#define TEMP 50.0
 #define L 2 
 #define K 10 
 #define ALPHA 0.8

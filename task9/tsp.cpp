@@ -4,6 +4,7 @@
 #include <math.h>
 #include <climits>
 #include <LEDA/graphics/graphwin.h>
+#include <LEDA/core/random_source.h>
 #include <LEDA/graphics/window.h>
 #include <LEDA/graphics/color.h>
 #include <LEDA/system/basic.h>
@@ -32,6 +33,7 @@ using leda::GraphWin;
 using leda::red;
 using leda::blue;
 using leda::orange;
+using leda::random_source;
 using leda::green;
 using leda::yellow;
 using leda::black;
@@ -102,8 +104,49 @@ void tsp(int** matrix, int dimension) {
         p(node_order[i]);
     }
 
+    p("--");
+
+
+
     p("cost is");
     p(cost);
+
+
+    // 2 - opt - what if start node is changed???
+    random_source random_number(0, dimension - 1);
+    int j = random_number();
+    int k = random_number();
+
+    int new_cost = cost;
+
+    int j_node = node_order[j];
+    new_cost -= matrix[node_order[j-1]][j_node];
+    new_cost -= matrix[node_order[j+1]][j_node];
+
+    int k_node = node_order[k];
+    new_cost -= matrix[node_order[k-1]][k_node];
+    new_cost -= matrix[node_order[k+1]][k_node];
+
+    node_order[j] = k_node;
+    node_order[k] = j_node;
+
+    new_cost += matrix[node_order[j-1]][j_node];
+    new_cost += matrix[node_order[j+1]][j_node];
+
+    new_cost += matrix[node_order[k-1]][k_node];
+    new_cost += matrix[node_order[k+1]][k_node];
+
+
+    for (int i = 0; i < dimension +1; i++) {
+        p(node_order[i]);
+    }
+
+    p("--");
+
+    p("new cost is");
+    p(new_cost);
+
+
 
 }
 

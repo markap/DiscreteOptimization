@@ -1,12 +1,3 @@
-// Greedy-Coloring 3 algorithm to colour the nodes of a planar graph 
-
-// Nodes that are not connected might be assigned the same colour. 
-// Colouring is illustrated through LEDA colours
-// This implementation uses 16  distinct colours. If more colours are required nodes with different colours 
-// can be distinguished through their user label which contains a distinct number for each colour.
-
-
-
 #include <iostream>
 #include <math.h>
 #include <climits>
@@ -66,6 +57,7 @@ using leda::roman_font;
 using leda::bold_font;
 using leda::gw_node_shape;
 using leda::rectangle_node;
+
 
 
 //void find_round_trip (
@@ -190,5 +182,10 @@ int main(int argc, char *argv[]) {
     // Aufraeumen und Ende
     gw.close();
     destroy_control();
+
+
+
+
+
     exit(0);
 }

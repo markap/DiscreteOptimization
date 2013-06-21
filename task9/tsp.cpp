@@ -67,28 +67,22 @@ using leda::bold_font;
 using leda::gw_node_shape;
 using leda::rectangle_node;
 
-graph global_graph;
-// function to compare degrees of two nodes a and b
-// parameters:
-//    	a: node a
-//		b: node b
-int compare(const node &a, const node &b) { //method to compare the degrees of two nodes
-    return global_graph.degree(b) - global_graph.degree(a);
-}
+
+//void find_round_trip (
 
 // iterative function to colour all nodes in a planar graph;
 // parameters:
 //    g: graph to be searched in (as reference)
 //    gw: Diplaying window of graph (as reference)
-void coloring(graph &g, GraphWin &gw) {
+/*void tsp(graph &g, GraphWin &gw) {
 
     int max_color = -1;
     
     global_graph = g;
     g.sort_nodes(compare); // all nodes are sorted in descending order according to their degrees
     
-
-    node_array<int> node_color(g, -1); // saves whether node has been assigned a colour
+    edge_array<int> edges
+    node_array<int> nodes(g, 0); // saves whether node has been assigned a colour
 
     
     leda::color my_colors[COLOR_COUNT] = { brown, red, violet, green, blue, orange, cyan, black, white, pink, green2, blue2, grey1, grey2, grey3,yellow}; // usable colours
@@ -139,19 +133,22 @@ void coloring(graph &g, GraphWin &gw) {
     }
     
 
-}
+}*/
 
 
 // Main program
 int main(int argc, char *argv[]) {
-
+    
     // Create window for illustrating the graph with size 800 x 600 
     GraphWin gw(800, 600);
     gw.display(); // Display window on the screen
     create_control(); // Display control window
     gw.set_directed(false); // use undirected graph presentation
     gw.set_animation_steps(40);
-
+    
+    for (int i= 0; i <argc; i++) {
+        cout << atoi (argv[i]) << end1;
+    }
     if (argc > 1) {    // falls Name als Parameter, Graph laden
         gw.read(argv[1]);
     }
@@ -185,7 +182,7 @@ int main(int argc, char *argv[]) {
     gw.set_flush(true);
     gw.redraw();
 
-    coloring(g, gw);
+    //coloring(g, gw);
 
     gw.acknowledge("Done");
     gw.edit(); // nochmal in den Edit-Modus, zum Anschauen :)

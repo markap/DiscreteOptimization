@@ -1,5 +1,7 @@
 #include <iostream>
 #include <fstream>
+#include <ctime>
+#include <cstdlib>
 #include <string>
 #include <math.h>
 #include <climits>
@@ -15,9 +17,12 @@
 #include <LEDA/core/list.h>
 #include <LEDA/geo/point.h>
 
+#include "control.h"
 
-#define WAIT 0.2  //Wartezeit
-#define COLOR_COUNT 16
+#define TEMP 1000
+#define L 10 
+#define K 10 
+#define ALPHA 0.99
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 #define len(array) ( sizeof(array) / sizeof(array[0]) )
@@ -82,7 +87,7 @@ void tsp(int** matrix, int dimension) {
     node_order[0] = start_node;
     for (int i = 1; i < dimension; i++) {
         int* line = matrix[start_node];  
-        int min = 60000;//@todo infini
+        int min = 6000000;//@todo infini
         int min_node;
         for (int j = 1; j < dimension; j++) {
             if (min > line[j] && node_visited[j] == 0) {
@@ -111,54 +116,113 @@ void tsp(int** matrix, int dimension) {
     p("cost is");
     p(cost);
 
+    int update = 0;
+    int steps = 0;
+    double temp = TEMP;
 
-    // 2 - opt - what if start node is changed???
-    random_source random_number(1, dimension - 1);
-    int j = random_number();
-    int k = random_number();
+    while (1) {
 
-    int new_cost = cost;
-
-    int j_node = node_order[j];
-    new_cost -= matrix[node_order[j-1]][j_node];
-    new_cost -= matrix[node_order[j+1]][j_node];
-
-    int k_node = node_order[k];
-    new_cost -= matrix[node_order[k-1]][k_node];
-    new_cost -= matrix[node_order[k+1]][k_node];
-
-    node_order[j] = k_node;
-    node_order[k] = j_node;
-
-    new_cost += matrix[node_order[j-1]][k_node];
-    new_cost += matrix[node_order[j+1]][k_node];
-
-    new_cost += matrix[node_order[k-1]][j_node];
-    new_cost += matrix[node_order[k+1]][j_node];
+        int new_node_order[dimension + 1];
+        for (int i = 0; i < dimension + 1; i++) {
+            new_node_order[i] = node_order[i];   
+        } 
 
 
+        // 2 - opt - what if start node is changed???
+        random_source random_number(1, dimension - 1);
+        int j = random_number();
+        int k = random_number();
 
-    for (int i = 0; i < dimension +1; i++) {
-        p(node_order[i]);
+        int new_cost = cost;
+
+        int j_node = new_node_order[j];
+        new_cost -= matrix[new_node_order[j-1]][j_node];
+        new_cost -= matrix[new_node_order[j+1]][j_node];
+
+        int k_node = new_node_order[k];
+        new_cost -= matrix[new_node_order[k-1]][k_node];
+        new_cost -= matrix[new_node_order[k+1]][k_node];
+
+        new_node_order[j] = k_node;
+        new_node_order[k] = j_node;
+
+        new_cost += matrix[new_node_order[j-1]][k_node];
+        new_cost += matrix[new_node_order[j+1]][k_node];
+
+        new_cost += matrix[new_node_order[k-1]][j_node];
+        new_cost += matrix[new_node_order[k+1]][j_node];
+
+        for (int i = 0; i < dimension +1; i++) {
+            p(new_node_order[i]);
+        }
+
+        p("--");
+
+        p("new cost is");
+        p(new_cost);
+
+        int delta = new_cost - cost;
+        double rand_number = ((double) rand() / RAND_MAX);
+        p("delta");
+        p(delta);
+        p("exp");
+        p(exp(-delta/temp));
+        p(rand_number);
+        if (delta <= 0 || exp(-delta/temp) > rand_number) {
+            p("update cost ...");
+            
+            cost = new_cost;
+            p(cost);
+            fflush(stdout);
+            //sleep(5);
+            // runtime!!!
+            for (int i = 0; i < dimension + 1; i++) {
+                node_order[i] = new_node_order[i];   
+            } 
+
+            update++;
+        }
+        steps++;
+        p("steps ");
+        p(steps);
+        p("update ");
+        p(update);
+
+        if (steps > K || update > L) {
+            temp = temp * ALPHA;
+            if (temp < 100) {
+                p("break - temp is ...");
+                p(temp);
+                break;
+            }
+            steps = 0;
+            update = 0;
+            p("new temp is");
+            p(temp);
+        }
+
+        //fflush(stdout);
+        //sleep(0);
+
     }
-
-    p("--");
-
-    p("new cost is");
-    p(new_cost);
-
-
 
 }
 
 // Main program
 int main(int argc, char *argv[]) {
 
+    std::string file_name;
+    for (int i = 1; i < argc; i++) {
+        file_name.append(argv[i]);
+    }
+
+    srand(time(NULL));
+
     int **matrix;
     int dimension;
 
     std::string line;
-    ifstream myfile("data/tsp0.in");
+    ifstream myfile(file_name.c_str());
     if (myfile.is_open()) {
 
         int node_number = -1; // first line is not to build the graph

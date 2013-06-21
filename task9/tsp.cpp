@@ -19,11 +19,11 @@
 
 #include "control.h"
 
-#define TEMP 100.0
+#define TEMP 250.0
 #define L 2 
 #define K 10 
-#define ALPHA 0.99
-#define BETA 0.001
+#define ALPHA 0.8
+#define BETA 0.004
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 #define len(array) ( sizeof(array) / sizeof(array[0]) )
@@ -126,7 +126,7 @@ void tsp(int** matrix, int dimension) {
     int anneal_count = 0;
     int delta_count = 0;
 
-    while (temp > 1) {
+    while (temp > 0.5) {
 
         int new_cost = cost;
         int new_node_order[dimension + 1];

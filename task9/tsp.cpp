@@ -244,26 +244,7 @@ void tsp(int** matrix, int dimension) {
         new_node_order[j] = k_node;
         new_node_order[k] = m_node;
         new_node_order[m] = j_node;
-        }
-        
-        else {
-            new_cost -= matrix[node_order[j-1]][j_node];
-            new_cost -= matrix[node_order[j+1]][j_node];
 
-            int k_node = node_order[k];
-            new_cost -= matrix[node_order[k-1]][k_node];
-            new_cost -= matrix[node_order[k+1]][k_node];
-
-            node_order[j] = k_node;
-            node_order[k] = j_node;
-
-            new_cost += matrix[node_order[j-1]][k_node];
-            new_cost += matrix[node_order[j+1]][k_node];
-
-            new_cost += matrix[node_order[k-1]][j_node];
-            new_cost += matrix[node_order[k+1]][j_node];
-        }
-        
          new_cost = 0;//cost;
         
         for (int i = 0; i < dimension; i++) {
@@ -302,7 +283,27 @@ void tsp(int** matrix, int dimension) {
             new_node_order[k] = m_node;
             new_node_order[m] = k_node;
         }
+        }
+        
+        else {
+            new_cost = cost;
+            new_cost -= matrix[node_order[j-1]][j_node];
+            new_cost -= matrix[node_order[j+1]][j_node];
 
+            int k_node = node_order[k];
+            new_cost -= matrix[node_order[k-1]][k_node];
+            new_cost -= matrix[node_order[k+1]][k_node];
+
+            node_order[j] = k_node;
+            node_order[k] = j_node;
+
+            new_cost += matrix[node_order[j-1]][k_node];
+            new_cost += matrix[node_order[j+1]][k_node];
+
+            new_cost += matrix[node_order[k-1]][j_node];
+            new_cost += matrix[node_order[k+1]][j_node];
+        }
+        
 
 
 

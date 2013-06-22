@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <ctime>
+#include <cstring>
 #include <cstdlib>
 #include <string>
 #include <math.h>
@@ -20,7 +21,7 @@
 #include "control.h"
 
 #define TEMP 50.0
-#define L 2 
+#define L 5 
 #define K 10 
 #define ALPHA 0.8
 #define BETA 0.004
@@ -70,12 +71,14 @@ using leda::gw_node_shape;
 using leda::rectangle_node;
 
 void tsp(int** matrix, int dimension) {
+    /**
     for (int i = 0; i < dimension; i++) {
         for (int j = 0; j < dimension; j++) {
             cout << matrix[i][j] << " ";
         }
         cout << endl;
     }
+    */
 
     // find any cycle
     int start_node = 0;
@@ -106,12 +109,6 @@ void tsp(int** matrix, int dimension) {
     cost += matrix[node_order[dimension-1]][node_order[0]];
     node_order[dimension] = node_order[0];
 
-    for (int i = 0; i < dimension +1; i++) {
-        p(node_order[i]);
-    }
-
-    p("--");
-
 
     int start_cost = cost;
 
@@ -125,15 +122,13 @@ void tsp(int** matrix, int dimension) {
     int count = 0;
     int anneal_count = 0;
     int delta_count = 0;
-
-    while (temp > 0.5) {
+    
+    while (temp > 0.1) {
 
         int new_cost = cost;
         int new_node_order[dimension + 1];
-        for (int i = 0; i < dimension + 1; i++) {
-            new_node_order[i] = node_order[i];   
-        } 
-
+        memcpy(&new_node_order, node_order, sizeof(node_order));
+        
 
         // 2 - opt - what if start node is changed???
         random_source random_number(1, dimension - 1);
@@ -173,118 +168,184 @@ void tsp(int** matrix, int dimension) {
 
 */
         // aaaaaaaaaaaaaa
+        int a_cost = cost;
+        a_cost -= matrix[new_node_order[k-1]][k_node];
+        a_cost -= matrix[new_node_order[k+1]][k_node];
+        a_cost -= matrix[new_node_order[m-1]][m_node];
+        a_cost -= matrix[new_node_order[m+1]][m_node];
+
         new_node_order[j] = j_node;
         new_node_order[k] = m_node;
         new_node_order[m] = k_node;
 
-        new_cost = 0;//cost;
-        
-        for (int i = 0; i < dimension; i++) {
-            new_cost += matrix[new_node_order[i]][new_node_order[i+1]];    
-        }
-       
-        int a = new_cost;
+        a_cost += matrix[new_node_order[k-1]][m_node];
+        a_cost += matrix[new_node_order[k+1]][m_node];
+        a_cost += matrix[new_node_order[m-1]][k_node];
+        a_cost += matrix[new_node_order[m+1]][k_node];
+
 
         new_node_order[j] = j_node;
         new_node_order[k] = k_node;
         new_node_order[m] = m_node;
 
         // bbbbbbbbbbbbbbb
+        int b_cost = cost;
+        b_cost -= matrix[new_node_order[j-1]][j_node];
+        b_cost -= matrix[new_node_order[j+1]][j_node];
+        b_cost -= matrix[new_node_order[k-1]][k_node];
+        b_cost -= matrix[new_node_order[k+1]][k_node];
+        b_cost -= matrix[new_node_order[m-1]][m_node];
+        b_cost -= matrix[new_node_order[m+1]][m_node];
+        if (k == j+1 || j == k+1) {
+            b_cost += matrix[new_node_order[k]][new_node_order[j]];
+        }
+        if (m == j+1 || j == m+1) {
+            b_cost += matrix[new_node_order[m]][new_node_order[j]];
+        }
+        if (k == m+1 || m == k+1) {
+            b_cost += matrix[new_node_order[k]][new_node_order[m]];
+        }
+
         new_node_order[j] = m_node;
         new_node_order[k] = j_node;
         new_node_order[m] = k_node;
 
-         new_cost = 0;//cost;
-        
-        for (int i = 0; i < dimension; i++) {
-            new_cost += matrix[new_node_order[i]][new_node_order[i+1]];    
-        }
 
-        int b = new_cost;
+        b_cost += matrix[new_node_order[j-1]][new_node_order[j]];
+        b_cost += matrix[new_node_order[j]][new_node_order[j+1]];
+        b_cost += matrix[new_node_order[k-1]][new_node_order[k]];
+        b_cost += matrix[new_node_order[k]][new_node_order[k+1]];
+        b_cost += matrix[new_node_order[m-1]][new_node_order[m]];
+        b_cost += matrix[new_node_order[m]][new_node_order[m+1]];
+
+        if (k == j+1 || j == k+1) {
+            b_cost -= matrix[new_node_order[k]][new_node_order[j]];
+        }
+        if (m == j+1 || j == m+1) {
+            b_cost -= matrix[new_node_order[m]][new_node_order[j]];
+        }
+        if (k == m+1 || m == k+1) {
+            b_cost -= matrix[new_node_order[k]][new_node_order[m]];
+        }
 
         new_node_order[j] = j_node;
         new_node_order[k] = k_node;
         new_node_order[m] = m_node;
 
         // ccccccccccccccc
+        int c_cost = cost;
+        c_cost -= matrix[new_node_order[j-1]][j_node];
+        c_cost -= matrix[new_node_order[j+1]][j_node];
+        c_cost -= matrix[new_node_order[m-1]][m_node];
+        c_cost -= matrix[new_node_order[m+1]][m_node];
+
         new_node_order[j] = m_node;
         new_node_order[k] = k_node;
         new_node_order[m] = j_node;
 
-         new_cost = 0;//cost;
-        
-        for (int i = 0; i < dimension; i++) {
-            new_cost += matrix[new_node_order[i]][new_node_order[i+1]];    
-        }
+        c_cost += matrix[new_node_order[j-1]][m_node];
+        c_cost += matrix[new_node_order[j+1]][m_node];
+        c_cost += matrix[new_node_order[m-1]][j_node];
+        c_cost += matrix[new_node_order[m+1]][j_node];
 
-        int c = new_cost;
 
         new_node_order[j] = j_node;
         new_node_order[k] = k_node;
         new_node_order[m] = m_node;
 
+
         // ddddddddddddddd
+        int d_cost = cost;
+        d_cost -= matrix[new_node_order[j-1]][j_node];
+        d_cost -= matrix[new_node_order[j+1]][j_node];
+        d_cost -= matrix[new_node_order[k-1]][k_node];
+        d_cost -= matrix[new_node_order[k+1]][k_node];
+
         new_node_order[j] = k_node;
         new_node_order[k] = j_node;
         new_node_order[m] = m_node;
 
-         new_cost = 0;//cost;
-        
-        for (int i = 0; i < dimension; i++) {
-            new_cost += matrix[new_node_order[i]][new_node_order[i+1]];    
-        }
 
-        int d = new_cost;
+        d_cost += matrix[new_node_order[j-1]][k_node];
+        d_cost += matrix[new_node_order[j+1]][k_node];
+        d_cost += matrix[new_node_order[k-1]][j_node];
+        d_cost += matrix[new_node_order[k+1]][j_node];
 
         new_node_order[j] = j_node;
         new_node_order[k] = k_node;
         new_node_order[m] = m_node;
 
         // eeeeeeeeeeeee
+        int e_cost = cost;
+        e_cost -= matrix[new_node_order[j-1]][j_node];
+        e_cost -= matrix[new_node_order[j+1]][j_node];
+        e_cost -= matrix[new_node_order[k-1]][k_node];
+        e_cost -= matrix[new_node_order[k+1]][k_node];
+        e_cost -= matrix[new_node_order[m-1]][m_node];
+        e_cost -= matrix[new_node_order[m+1]][m_node];
+
+        if (k == j+1 || j == k+1) {
+            e_cost += matrix[new_node_order[k]][new_node_order[j]];
+        }
+        if (m == j+1 || j == m+1) {
+            e_cost += matrix[new_node_order[m]][new_node_order[j]];
+        }
+        if (k == m+1 || m == k+1) {
+            e_cost += matrix[new_node_order[k]][new_node_order[m]];
+        }
+
         new_node_order[j] = k_node;
         new_node_order[k] = m_node;
         new_node_order[m] = j_node;
 
-         new_cost = 0;//cost;
-        
-        for (int i = 0; i < dimension; i++) {
-            new_cost += matrix[new_node_order[i]][new_node_order[i+1]];    
+        e_cost += matrix[new_node_order[j-1]][new_node_order[j]];
+        e_cost += matrix[new_node_order[j]][new_node_order[j+1]];
+        e_cost += matrix[new_node_order[k-1]][new_node_order[k]];
+        e_cost += matrix[new_node_order[k]][new_node_order[k+1]];
+        e_cost += matrix[new_node_order[m-1]][new_node_order[m]];
+        e_cost += matrix[new_node_order[m]][new_node_order[m+1]];
+
+        if (k == j+1 || j == k+1) {
+            e_cost -= matrix[new_node_order[k]][new_node_order[j]];
+        }
+        if (m == j+1 || j == m+1) {
+            e_cost -= matrix[new_node_order[m]][new_node_order[j]];
+        }
+        if (k == m+1 || m == k+1) {
+            e_cost -= matrix[new_node_order[k]][new_node_order[m]];
         }
 
-        int e = new_cost;
 
+        if (e_cost < a_cost && e_cost < b_cost && e_cost < c_cost && e_cost < d_cost) {
+            new_cost = e_cost;
 
-        if (e < a && e < b && e < c && e < d) {
-            new_cost = e;
-
-        } else if (d < a && d < b && d < c) {
-            new_cost = d;
+        } else if (d_cost < a_cost && d_cost < b_cost && d_cost < c_cost) {
+            new_cost = d_cost;
 
             new_node_order[j] = k_node;
             new_node_order[k] = j_node;
             new_node_order[m] = m_node;
         
-        } else if (c < a && c < b) {
-            new_cost = c;
+        } else if (c_cost < a_cost && c_cost < b_cost) {
+            new_cost = c_cost;
 
             new_node_order[j] = m_node;
             new_node_order[k] = k_node;
             new_node_order[m] = j_node;
-        } else if (b < a) {
-            new_cost = b;
+        } else if (b_cost < a_cost) {
+            new_cost = b_cost;
 
             new_node_order[j] = m_node;
             new_node_order[k] = j_node;
             new_node_order[m] = k_node;
         } else {
-            new_cost = a;
+            new_cost = a_cost;
 
             new_node_order[j] = j_node;
             new_node_order[k] = m_node;
             new_node_order[m] = k_node;
         }
 
-        
 
 
 
@@ -294,61 +355,60 @@ void tsp(int** matrix, int dimension) {
         //new_cost += matrix[new_node_order[k-1]][j_node];
         //new_cost += matrix[new_node_order[k+1]][j_node];
 
-        for (int i = 0; i < dimension +1; i++) {
-            p(new_node_order[i]);
-        }
 
-        p("--");
-
-        p("new cost is");
-        p(new_cost);
+        //p("new cost is");
+        //p(new_cost);
 
         int delta = new_cost - cost;
         double rand_number = ((double) rand() / RAND_MAX);
+        /*
         p("delta");
         p(delta);
         p("exp");
         p(exp(-delta/temp));
         p("rand");
         p(rand_number);
+        */
         count++;
         if (delta < 0) {
             delta_count++;
+            update++;
         }
             
         
         if (delta <= 0 || exp(-delta/temp) > rand_number) {
             anneal_count++;
-            p("update cost ...");
+            //p("update cost ...");
             
             cost = new_cost;
-            p(cost);
-            fflush(stdout);
+            //p(cost);
+            //fflush(stdout);
             //sleep(5);
-            // runtime!!!
-            for (int i = 0; i < dimension + 1; i++) {
-                node_order[i] = new_node_order[i];   
-            } 
+            memcpy(&node_order, new_node_order, sizeof(node_order));
 
-            update++;
         }
         steps++;
-        p("steps ");
-        p(steps);
-        p("update ");
-        p(update);
+        //p("steps ");
+        //p(steps);
+        //p("update ");
+        //p(update);
 
         if (steps > K || update > L) {
             temp = temp/ (1 +  BETA * temp);
             steps = 0;
             update = 0;
-            p("new temp is");
-            p(temp);
+            //p("new temp is");
+            //p(temp);
+            if (temp <= 0.1 && start_cost <= cost) {
+                // @todo only 5 times or so
+                temp += TEMP / 5;
+            }
         }
 
         //fflush(stdout);
         //sleep(0);
 
+        
     }
 
     p("break - temp is ...");
@@ -399,8 +459,8 @@ int main(int argc, char *argv[]) {
             if (line == "") {
                 break;
             }
-            p("next line");
-            p(line);
+            //p("next line");
+            //p(line);
 
             if (node_number == -1) {
                 dimension = atoi(line.c_str());
@@ -421,9 +481,9 @@ int main(int argc, char *argv[]) {
                     token = line.substr(0, pos);
                     line.erase(0, pos + delimiter.length());
 
-                    p(node_number);
-                    p(to_node_number);
-                    p(token);
+                    //p(node_number);
+                    //p(to_node_number);
+                    //p(token);
                     matrix[node_number][to_node_number] = atoi(token.c_str());
                     matrix[to_node_number][node_number] = atoi(token.c_str());
                 
@@ -431,9 +491,9 @@ int main(int argc, char *argv[]) {
                 }
 
                 token = line;
-                p(node_number);
-                p(to_node_number);
-                p(token);
+                //p(node_number);
+                //p(to_node_number);
+                //p(token);
                 matrix[node_number][to_node_number] = atoi(token.c_str());
 
             }

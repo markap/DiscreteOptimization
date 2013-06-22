@@ -400,6 +400,7 @@ void tsp(int** matrix, int dimension) {
             //p("new temp is");
             //p(temp);
             if (temp <= 0.1 && start_cost <= cost) {
+                // @todo only 5 times or so
                 temp += TEMP / 5;
             }
         }

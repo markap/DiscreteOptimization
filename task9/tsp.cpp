@@ -20,7 +20,7 @@
 
 #include "control.h"
 
-#define TEMP 50.0
+#define TEMP 100.0
 #define L 5 
 #define K 10 
 #define ALPHA 0.8
@@ -70,7 +70,7 @@ using leda::bold_font;
 using leda::gw_node_shape;
 using leda::rectangle_node;
 
-void tsp(int** matrix, int dimension) {
+void tsp(std::string file_name, int** matrix, int dimension) {
     /**
     for (int i = 0; i < dimension; i++) {
         for (int j = 0; j < dimension; j++) {
@@ -429,6 +429,16 @@ void tsp(int** matrix, int dimension) {
     }
 
     cout << endl;
+    
+    // writing to file
+   // remove(file_name.c_str());
+    std::ofstream out_file (file_name.c_str());
+    out_file << cost << "\n";
+    for (int i = 0; i<dimension; i++) {
+        out_file << node_order[i] <<" ";
+    }
+        
+    out_file.close();
 
 }
 
@@ -501,8 +511,12 @@ int main(int argc, char *argv[]) {
         }
 
         myfile.close();
+        std::string file_output_name = file_name.substr (0, file_name.size() -2 );
+        file_output_name.append("out");
+        p(file_output_name); 
+        tsp(file_output_name, matrix, dimension);
 
-        tsp(matrix, dimension);
+        
 
     } else {
         p("unable to open file");

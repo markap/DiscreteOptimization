@@ -20,7 +20,7 @@
 
 #include "control.h"
 
-#define TEMP 100.0
+#define TEMP 50.0
 #define L 5 
 #define K 10 
 #define ALPHA 0.8
@@ -81,6 +81,8 @@ void tsp(std::string file_name, int** matrix, int dimension) {
     */
 
     // find any cycle
+
+    int temp_up_count = 0;
     int start_node = 0;
     int node_order[dimension + 1];
     int node_visited[dimension];
@@ -91,7 +93,7 @@ void tsp(std::string file_name, int** matrix, int dimension) {
     node_order[0] = start_node;
     for (int i = 1; i < dimension; i++) {
         int* line = matrix[start_node];  
-        int min = 6000000;//@todo infini
+        int min = numeric_limits<int>::max();
         int min_node;
         for (int j = 1; j < dimension; j++) {
             if (min > line[j] && node_visited[j] == 0) {
@@ -377,7 +379,9 @@ void tsp(std::string file_name, int** matrix, int dimension) {
             
         
         if (delta <= 0 || exp(-delta/temp) > rand_number) {
-            anneal_count++;
+            if (delta > 0) {
+                anneal_count++;
+            }
             //p("update cost ...");
             
             cost = new_cost;
@@ -399,9 +403,15 @@ void tsp(std::string file_name, int** matrix, int dimension) {
             update = 0;
             //p("new temp is");
             //p(temp);
+            if (temp <= 0.1 && temp_up_count >= 5 && start_cost >= cost) {
+                p(temp_up_count);
+                p("break temp_up_count");
+                break;
+            }
             if (temp <= 0.1 && start_cost <= cost) {
-                // @todo only 5 times or so
+                temp_up_count++;
                 temp += TEMP / 5;
+                p("temp up again");
             }
         }
 
@@ -422,7 +432,8 @@ void tsp(std::string file_name, int** matrix, int dimension) {
     p(count);
     p("delta");
     p(delta_count);
-    p(anneal_count - delta_count);
+    p("anneal");
+    p(anneal_count);
 
     for (int i = 0; i < dimension; i++) {
         cout << node_order[i] << " ";

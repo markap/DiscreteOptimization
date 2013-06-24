@@ -1,3 +1,8 @@
+// Heuristic based on simulated annealing to find a short round trip visiting all nodes
+// Using a 3-opt step which runs in constant time the algorithm gradually improves the initial solution
+// We consider cases a to e to select the best solution among 5 different 3-opt steps
+
+
 #include <iostream>
 #include <fstream>
 #include <ctime>
@@ -20,11 +25,11 @@
 
 #include "control.h"
 
-#define TEMP 50.0
-#define L 5 
-#define K 10 
-#define ALPHA 0.8
-#define BETA 0.004
+#define TEMP 50.0 // Temparature
+#define L 5  // number of improving steps
+#define K 10 // number of 3-opt steps
+#define ALPHA 0.8 // annealing factor
+#define BETA 0.004 // other factor to gradually reduce temparature
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
 #define len(array) ( sizeof(array) / sizeof(array[0]) )
@@ -70,6 +75,13 @@ using leda::bold_font;
 using leda::gw_node_shape;
 using leda::rectangle_node;
 
+// Function tsp
+//    	Parameters:
+//		file_name: File where the output is written in
+//		matrix: Adjacency matrix
+//		dimension: Number of nodes
+
+
 void tsp(std::string file_name, int** matrix, int dimension) {
     /**
     for (int i = 0; i < dimension; i++) {
@@ -82,20 +94,20 @@ void tsp(std::string file_name, int** matrix, int dimension) {
 
     // find any cycle
 
-    int temp_up_count = 0;
-    int start_node = 0;
-    int node_order[dimension + 1];
-    int node_visited[dimension];
-    int cost = 0;
+    int temp_up_count = 0; // 
+    int start_node = 0; //assign 0 to start_node
+    int node_order[dimension + 1];// oder in which nodes are visited
+    int node_visited[dimension];//
+    int cost = 0; // Cost of the round trip; default value 0
     for (int i = 0; i < dimension; i++) {
-        node_visited[i] = 0;
+        node_visited[i] = 0; // in the beginning no node has been visited
     }
     node_order[0] = start_node;
-    for (int i = 1; i < dimension; i++) {
+    for (int i = 1; i < dimension; i++) {// Greedy algorithm to find one possible round trip solution
         int* line = matrix[start_node];  
         int min = numeric_limits<int>::max();
         int min_node;
-        for (int j = 1; j < dimension; j++) {
+        for (int j = 1; j < dimension; j++) { // search node with minimum distance to start_node
             if (min > line[j] && node_visited[j] == 0) {
                 min = line[j];
                 min_node = j;
@@ -103,73 +115,59 @@ void tsp(std::string file_name, int** matrix, int dimension) {
         } 
 
         node_order[i] = min_node;
-        node_visited[min_node] = 1;
-        cost += matrix[start_node][min_node];
-        start_node = min_node;
+        node_visited[min_node] = 1;// flag as visited
+        cost += matrix[start_node][min_node];//update cost
+        start_node = min_node; // new start_node is min_node
     }
 
-    cost += matrix[node_order[dimension-1]][node_order[0]];
+    cost += matrix[node_order[dimension-1]][node_order[0]];//add the last connection from last node to first node to the costs
     node_order[dimension] = node_order[0];
 
 
-    int start_cost = cost;
+    int start_cost = cost;// initial cost is the current minimal cost
 
     p("cost is");
     p(cost);
 
-    int update = 0;
-    int steps = 0;
+    int update = 0;// number of improving steps until next temparature change
+    int steps = 0; // number of 3-opt steps until next temparature change
     double temp = TEMP;
 
     int count = 0;
-    int anneal_count = 0;
+    int anneal_count = 0; // number of annealings
     int delta_count = 0;
     
-    while (temp > 0.1) {
+    while (temp > 0.1) {// as long as temparature > 0.1 run tsp to find better solution
 
-        int new_cost = cost;
-        int new_node_order[dimension + 1];
-        memcpy(&new_node_order, node_order, sizeof(node_order));
+        int new_cost = cost; // new cost
+        int new_node_order[dimension + 1]; // new node oder
+        memcpy(&new_node_order, node_order, sizeof(node_order)); 
         
 
         // 2 - opt - what if start node is changed???
-        random_source random_number(1, dimension - 1);
+        random_source random_number(1, dimension - 1);//determine random node
 
-        int j = random_number();
+        int j = random_number(); // random node j
         int k = j;
         while (k == j) {
-            k = random_number();
+            k = random_number();// random node k
         }
         int m = k;
         while (m == k || m == j) {
-            m = random_number();
+            m = random_number(); // random node m
         } 
 
-
+		// Nodes  j, k, m
         int j_node = new_node_order[j];
-        //new_cost -= matrix[new_node_order[j-1]][j_node];
-        //new_cost -= matrix[new_node_order[j+1]][j_node];
+       
         
 
         int k_node = new_node_order[k];
         int m_node = new_node_order[m];
-        //new_cost -= matrix[new_node_order[k-1]][k_node];
-        //new_cost -= matrix[new_node_order[k+1]][k_node];
-
-        //new_node_order[j] = k_node;
-        //new_node_order[k] = j_node;
-
+       
         new_cost = 0;
 
-/**
-        for (int i = 0; i < dimension; i++) {
-            new_cost += matrix[new_node_order[i]][new_node_order[i+1]];
-        }
-
-        int f = new_cost;
-
-*/
-        // aaaaaaaaaaaaaa
+        // Case a
         int a_cost = cost;
         a_cost -= matrix[new_node_order[k-1]][k_node];
         a_cost -= matrix[new_node_order[k+1]][k_node];
@@ -190,7 +188,7 @@ void tsp(std::string file_name, int** matrix, int dimension) {
         new_node_order[k] = k_node;
         new_node_order[m] = m_node;
 
-        // bbbbbbbbbbbbbbb
+        // Case b
         int b_cost = cost;
         b_cost -= matrix[new_node_order[j-1]][j_node];
         b_cost -= matrix[new_node_order[j+1]][j_node];
@@ -212,7 +210,7 @@ void tsp(std::string file_name, int** matrix, int dimension) {
         new_node_order[k] = j_node;
         new_node_order[m] = k_node;
 
-
+		// Update cost
         b_cost += matrix[new_node_order[j-1]][new_node_order[j]];
         b_cost += matrix[new_node_order[j]][new_node_order[j+1]];
         b_cost += matrix[new_node_order[k-1]][new_node_order[k]];
@@ -234,8 +232,9 @@ void tsp(std::string file_name, int** matrix, int dimension) {
         new_node_order[k] = k_node;
         new_node_order[m] = m_node;
 
-        // ccccccccccccccc
+        // Case c
         int c_cost = cost;
+		//Update cost
         c_cost -= matrix[new_node_order[j-1]][j_node];
         c_cost -= matrix[new_node_order[j+1]][j_node];
         c_cost -= matrix[new_node_order[m-1]][m_node];
@@ -256,8 +255,10 @@ void tsp(std::string file_name, int** matrix, int dimension) {
         new_node_order[m] = m_node;
 
 
-        // ddddddddddddddd
+        // Case d
         int d_cost = cost;
+		
+		// Update cost
         d_cost -= matrix[new_node_order[j-1]][j_node];
         d_cost -= matrix[new_node_order[j+1]][j_node];
         d_cost -= matrix[new_node_order[k-1]][k_node];
@@ -277,8 +278,9 @@ void tsp(std::string file_name, int** matrix, int dimension) {
         new_node_order[k] = k_node;
         new_node_order[m] = m_node;
 
-        // eeeeeeeeeeeee
+        // Case e
         int e_cost = cost;
+		// Update cost
         e_cost -= matrix[new_node_order[j-1]][j_node];
         e_cost -= matrix[new_node_order[j+1]][j_node];
         e_cost -= matrix[new_node_order[k-1]][k_node];
@@ -317,7 +319,7 @@ void tsp(std::string file_name, int** matrix, int dimension) {
             e_cost -= matrix[new_node_order[k]][new_node_order[m]];
         }
 
-
+		// Compare costs of different cases and select the one with the least cost
         if (e_cost < a_cost && e_cost < b_cost && e_cost < c_cost && e_cost < d_cost) {
             new_cost = e_cost;
 
@@ -350,59 +352,34 @@ void tsp(std::string file_name, int** matrix, int dimension) {
 
 
 
-
-        //new_cost += matrix[new_node_order[j-1]][k_node];
-        //new_cost += matrix[new_node_order[j+1]][k_node];
-
-        //new_cost += matrix[new_node_order[k-1]][j_node];
-        //new_cost += matrix[new_node_order[k+1]][j_node];
-
-
-        //p("new cost is");
-        //p(new_cost);
-
         int delta = new_cost - cost;
         double rand_number = ((double) rand() / RAND_MAX);
-        /*
-        p("delta");
-        p(delta);
-        p("exp");
-        p(exp(-delta/temp));
-        p("rand");
-        p(rand_number);
-        */
+
         count++;
         if (delta < 0) {
             delta_count++;
             update++;
         }
             
-        
+        // If costs are lower than costs of current solution or e^(-delta/temparature) > random number between 0 and 1 
         if (delta <= 0 || exp(-delta/temp) > rand_number) {
             if (delta > 0) {
                 anneal_count++;
             }
-            //p("update cost ...");
-            
+           
             cost = new_cost;
-            //p(cost);
-            //fflush(stdout);
-            //sleep(5);
+           
             memcpy(&node_order, new_node_order, sizeof(node_order));
 
         }
         steps++;
-        //p("steps ");
-        //p(steps);
-        //p("update ");
-        //p(update);
-
+   
+		// update temparature
         if (steps > K || update > L) {
             temp = temp/ (1 +  BETA * temp);
             steps = 0;
             update = 0;
-            //p("new temp is");
-            //p(temp);
+           
             if (temp <= 0.1 && temp_up_count >= 5 && start_cost >= cost) {
                 p(temp_up_count);
                 p("break temp_up_count");
@@ -415,9 +392,7 @@ void tsp(std::string file_name, int** matrix, int dimension) {
             }
         }
 
-        //fflush(stdout);
-        //sleep(0);
-
+ 
         
     }
 
@@ -442,10 +417,10 @@ void tsp(std::string file_name, int** matrix, int dimension) {
     cout << endl;
     
     // writing to file
-   // remove(file_name.c_str());
+
     std::ofstream out_file (file_name.c_str());
-    out_file << cost << "\n";
-    for (int i = 0; i<dimension; i++) {
+    out_file << cost << "\n"; // write cost
+    for (int i = 0; i<dimension; i++) { // write node order
         out_file << node_order[i] <<" ";
     }
         
@@ -520,8 +495,9 @@ int main(int argc, char *argv[]) {
             }
             node_number++;
         }
-
+		
         myfile.close();
+		// Create string for output file name
         std::string file_output_name = file_name.substr (0, file_name.size() -2 );
         file_output_name.append("out");
         p(file_output_name); 

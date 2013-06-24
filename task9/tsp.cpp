@@ -28,7 +28,7 @@
 #define TEMP 50.0 // Temparature
 #define L 5  // number of improving steps
 #define K 10 // number of 3-opt steps
-#define ALPHA 0.8 // annealing factor
+//#define ALPHA 0.8 // annealing factor
 #define BETA 0.004 // other factor to gradually reduce temparature
 
 #define p(str) ( std::cout << str << std::endl ) // print helper
@@ -123,6 +123,8 @@ void tsp(std::string file_name, int** matrix, int dimension) {
     cost += matrix[node_order[dimension-1]][node_order[0]];//add the last connection from last node to first node to the costs
     node_order[dimension] = node_order[0];
 
+    int start_node_order[dimension + 1]; // new node oder
+    memcpy(&start_node_order, node_order, sizeof(node_order)); 
 
     int start_cost = cost;// initial cost is the current minimal cost
 
@@ -380,9 +382,12 @@ void tsp(std::string file_name, int** matrix, int dimension) {
             steps = 0;
             update = 0;
            
+            // after heating up several times without success use start route
             if (temp <= 0.1 && temp_up_count >= 5 && start_cost >= cost) {
                 p(temp_up_count);
                 p("break temp_up_count");
+                memcpy(&node_order, start_node_order, sizeof(start_node_order));
+                cost = start_cost;
                 break;
             }
             if (temp <= 0.1 && start_cost <= cost) {

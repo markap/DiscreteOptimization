@@ -383,7 +383,7 @@ void tsp(std::string file_name, int** matrix, int dimension) {
             update = 0;
            
             // after heating up several times without success use start route
-            if (temp <= 0.1 && temp_up_count >= 5 && start_cost >= cost) {
+            if (temp <= 0.1 && temp_up_count >= 5 && start_cost <= cost) {
                 p(temp_up_count);
                 p("break temp_up_count");
                 memcpy(&node_order, start_node_order, sizeof(start_node_order));
@@ -394,6 +394,11 @@ void tsp(std::string file_name, int** matrix, int dimension) {
                 temp_up_count++;
                 temp += TEMP / 5;
                 p("temp up again");
+                continue;
+            }
+
+            if (temp <= 0.1) {
+                break;
             }
         }
 

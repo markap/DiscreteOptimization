@@ -146,7 +146,7 @@ void tsp(std::string file_name, int** matrix, int dimension) {
         memcpy(&new_node_order, node_order, sizeof(node_order)); 
         
 
-        // 2 - opt - what if start node is changed???
+        // 3 - opt - in constant time
         random_source random_number(1, dimension - 1);//determine random node
 
         int j = random_number(); // random node j

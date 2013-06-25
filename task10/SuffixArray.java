@@ -8,7 +8,19 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+
+
 public class SuffixArray {
+	
+
+	public int[] suf;
+	public int[] pos;
+	public boolean[] bucketStart;
+	public boolean[] bucketStart2;
+	public int[] bucketSize;
+	public String text;
+	public int n;
+	public Map<String, Integer> bucket;
 	
 	private void read() throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(new File("text1.txt")));
@@ -25,17 +37,24 @@ public class SuffixArray {
 	
 	private void suffix_array(String text, int n) {
 		
-		int[] suf = new int[n+1];
-		int[] pos = new int[n+1];
-		boolean[] bucketStart = new boolean[n+1];
-		boolean[] bucketStart2 = new boolean[n+1];
-		int[] bucketSize = new int[n+1];
-		Map<String, Integer> bucket = new HashMap<>(n+1);
+		this.text=text;
+		this.n=n;
+		suf = new int[n];
+		pos = new int[n];
+		bucketStart = new boolean[n+1];
+		bucketStart2 = new boolean[n+1];
+		bucketSize = new int[n+1];
+		
+		bucket = new HashMap<>(n+1);
 		
 		/*for (char c = 32; c < 127; c++) {
 			bucket.put(String.valueOf(c), -1);
 		}*/
-		char[] alphabet = {'a', 'b', 'c', '$'};
+		char[] alphabet = new char[256];
+		for (int i = 0; i < 256; i++) {
+			alphabet[i] = (char) i;
+		}
+		
 		for (int i = 0; i < alphabet.length; i++) {
 			bucket.put(String.valueOf(alphabet[i]), -1);
 		}
@@ -58,7 +77,7 @@ public class SuffixArray {
 		System.out.println();
 		
 		
-		int c = 1;
+		int c = 0;
 		for (int a = 0; a < alphabet.length; a++) {
 			char d = alphabet[a];
 			System.out.println(d);
@@ -81,8 +100,10 @@ public class SuffixArray {
 			}
 		}
 		
+		
 		bucketStart[n] = true;
 		for (int i = 0; i < n; i++) {
+			
 			pos[suf[i]] = i;
 		}
 		
@@ -104,6 +125,7 @@ public class SuffixArray {
 			int l = 0;
 			boolean r_found = false;
 			boolean l_found = false;
+			//search for l and r
 			for (int g = 0; g < bucketStart.length; g++) {
 				
 				if (r_found == true && l_found == true) {
@@ -197,6 +219,44 @@ public class SuffixArray {
 	
 	}
 
+	public boolean compare(String y, String x) {
+		
+		int ylength= y.length();
+		int xlength =x.length();
+		for (int i=0; i< xlength && i < ylength; i++)
+			if (y.charAt(i) != x.charAt(i))
+				return y.charAt(i)<x.charAt(i);
+		return (ylength<=xlength);
+		
+	}
+	
+	public int search(String y) {
+		
+		if (compare(y, text.substring(pos[0]))) {
+			return 0;
+		} else if (!(compare(y, text.substring(pos[n-1])))) {
+			System.out.println("x");
+			
+			return n;
+		}
+		else {
+			int l= 0;
+			int r= n-1;
+			while ((r-l) >1 ) {
+				int m= (int) Math.ceil((double)((l+r))/2.0d);
+				if(compare(y,text.substring(pos[m]))) {
+					r=m;
+				}
+				else {
+					l=m;
+				}
+			}
+				
+			return pos[r];
+		}
+
+		
+	}
 	
 	
 	public static void main(String[] args) throws IOException {
@@ -205,6 +265,7 @@ public class SuffixArray {
 		
 		SuffixArray suff = new SuffixArray();
 		suff.suffix_array(text, text.length());
+		System.out.println("Search Result: "+suff.search("aba$"));
 	}
 
 }

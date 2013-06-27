@@ -2,12 +2,10 @@ package com.optprak.suffix;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -22,7 +20,7 @@ public class SuffixArray {
 	public String text;
 	public int n;
 	public Map<String, Integer> bucket;
-	NavigableMap<String, Integer> posMap;
+	NavigableMap<Integer, String> posMap;
 
 	private void read() throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(new File(
@@ -30,7 +28,7 @@ public class SuffixArray {
 
 		String line;
 		while ((line = reader.readLine()) != null) {
-			System.out.println(line);
+			//system.out.println(line);
 		}
 
 		reader.close();
@@ -47,7 +45,7 @@ public class SuffixArray {
 		bucketSize = new int[n + 1];
 
 		bucket = new HashMap<>(n + 1);
-		posMap = new TreeMap<String, Integer>();
+		posMap = new TreeMap<Integer, String>();
 
 		/*
 		 * for (char c = 32; c < 127; c++) { bucket.put(String.valueOf(c), -1);
@@ -64,31 +62,31 @@ public class SuffixArray {
 
 		for (int i = 0; i < n; i++) {
 			String currentChar = String.valueOf(text.charAt(i));
-			System.out.println(currentChar);
+			//system.out.println(currentChar);
 			int bucketContent = bucket.get(currentChar);
 			bucket.put(currentChar, i);
 			pos[i] = bucketContent;
 		}
 
-		System.out.println("bucket");
-		System.out.println(bucket);
+		//system.out.println("bucket");
+		//system.out.println(bucket);
 
-		System.out.println("pos");
+		//system.out.println("pos");
 		for (int key : pos) {
-			System.out.print(key + " ");
+			//system.out.print(key + " ");
 		}
-		System.out.println();
+		//system.out.println();
 
 		int c = 0;
 		for (int a = 0; a < alphabet.length; a++) {
 			char d = alphabet[a];
-			System.out.println(d);
+			//system.out.println(d);
 			int i = bucket.get(String.valueOf(d));
-			System.out.println(i);
+			//system.out.println(i);
 			while (i != -1) {
 				int j = pos[i];
-				System.out.println(j);
-				System.out.println(c);
+				//system.out.println(j);
+				//system.out.println(c);
 				suf[i] = c;
 				if (i == bucket.get(String.valueOf(d))) {
 
@@ -109,15 +107,15 @@ public class SuffixArray {
 		}
 
 		for (boolean b : bucketStart) {
-			System.out.print(b);
-			System.out.print(" -> ");
+			//system.out.print(b);
+			//system.out.print(" -> ");
 		}
-		System.out.println();
+		//system.out.println();
 
 		// more stuff
 		for (int h = 0; h < Math.floor(Math.log(n) / Math.log(2)); h++) {
-			System.out.println();
-			System.out.println("round " + h);
+			//system.out.println();
+			//system.out.println("round " + h);
 			int r = 0;
 			int l = 0;
 			boolean r_found = false;
@@ -140,7 +138,7 @@ public class SuffixArray {
 				if (b == true && l_found == true) {
 					r_found = true;
 					r = g;
-					System.out.print(l + " -> " + r + " || ");
+					//system.out.print(l + " -> " + r + " || ");
 					bucketSize[l] = 0;
 					for (int i = l; i < r; i++) {
 						suf[pos[i]] = l;
@@ -168,7 +166,6 @@ public class SuffixArray {
 				if (b == true && l_found == true) {
 					r_found = true;
 					r = g;
-					System.out.print(l + " -> " + r + " || ");
 					for (int i = l; i < r; i++) {
 						int d = (int) (pos[i] - Math.pow(2, h));
 						if (d < 0 || d >= n) {
@@ -205,17 +202,13 @@ public class SuffixArray {
 				bucketStart[i] = bucketStart[i] || bucketStart2[i];
 			}
 			for (int i = 0; i < n; i++) {
-				posMap.put(text.substring(pos[i]),i);
+				posMap.put(i, text.substring(pos[i]));
 			}
 
 			
 		}
 
-		System.out.println();
-		System.out.println("pos");
-		for (int i : pos) {
-			System.out.println(i);
-		}
+		
 
 	}
 
@@ -244,11 +237,12 @@ public class SuffixArray {
 
 	public int[] search(String y) {
 
+		y=y.substring(0,y.length()-1);
 		
-		if (y.compareTo(text.substring(pos[n-1])) > 0) {
+		if (y.compareTo(posMap.get(n-1)) > 0) {
 			return new int[0];
 		}
-		if (y.compareTo(text.substring(pos[0])) < 0) {
+		if (y.compareTo(posMap.get(0)) < 0) {
 			return new int[0];
 		}
 		
@@ -260,7 +254,7 @@ public class SuffixArray {
 		while (left != right) {
 			int mid = (right + left) / 2;
 			
-			int compare = y.compareTo(text.substring(pos[mid]));
+			int compare = y.compareTo(posMap.get(mid));
 			
 			if (compare == 0) {
 				left = mid;
@@ -277,7 +271,7 @@ public class SuffixArray {
 		smallestIndex = left;
 		
 		{
-			String suff = text.substring(pos[smallestIndex]);
+			String suff = posMap.get(smallestIndex);
 			if (!(y.length() <= suff.length() && y.equals(suff.substring(0, y.length())))) {
 				return new int[0];
 			}
@@ -289,7 +283,7 @@ public class SuffixArray {
 		while(left != right) {
 			int mid = (int) Math.ceil((double)(right + left) / 2.0d);
 
-			String suff = text.substring(pos[mid]);
+			String suff = posMap.get(mid);
 			if (y.length() <= suff.length() && y.equals(suff.substring(0, y.length()))) {
 				left = mid;
 			} else {
@@ -307,71 +301,28 @@ public class SuffixArray {
 		}
 		return result;
 		
-		/*
-		int l = 1; 
-		int r = n + 1;
-		while (l < r) {
-			int mid = (l+r)/2;
-			if (y.compareTo(text.substring(pos[mid-1])) > 0) {
-				l = mid + 1;
-				System.out.println(y + " > " + text.substring(pos[mid-1]));
-			} else {
-				r = mid;
-				System.out.println(y + " <= " + text.substring(pos[mid-1]));
-			}
-		}
 		
-		System.out.println();
-		
-		int s = l;
-		r = n + 1;
-		l = 1;
-		while (l < r) {
-			int mid = (int) Math.floor((l+r)/2.0d);
-			if (y.equals(text.substring(pos[mid-1], Math.min(text.length()-1, pos[mid-1]+y.length()) ))) {
-				l = mid;
-				System.out.println(y + " == " + text.substring(pos[mid-1], pos[mid-1]+y.length()));
-			} else {
-				r = mid - 1;
-				System.out.println(y + " != " + text.substring(pos[mid-1], pos[mid-1]+y.length()));
-			}
-		}
-		
-		System.out.println();
-		
-		if (s > n || r < 1) {
-			return new int[0];
-		}
-		
-		int [] result= new int [r-s+1];
-		for (int i=0; i<r-s+1;i++) {
-			result[i]= pos[i+s-1];
-		}
-		return result; 
-		*/
 	}
 			
 		
-		
-		
-		
-		
-		
-		
-		
-	
-	
-	
 	
 
 	public static void main(String[] args) throws IOException {
-// Heute programmieren wir einen Algorithmus zur Suche in Texten.
-		String text = "bccaababa$";
+		DecimalFormat df = new DecimalFormat("0.0#########");
+		
+		
+		String text = "Heute programmieren wir einen Algorithmus zur Suche in Texten.$";
 
 		SuffixArray suff = new SuffixArray();
-		suff.suffix_array(text, text.length());
 		
-		int[] result = suff.search("caab");
+		long time = System.nanoTime();
+		suff.suffix_array(text, text.length());
+		System.out.println("Suffix-Array: \tZeit " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
+		
+		//te
+		time = System.nanoTime(); 
+		int[] result = suff.search("te$");
+		
 		
 		
 		int maxIndex = -1;
@@ -385,8 +336,51 @@ public class SuffixArray {
 			}
 		}
 				
-		System.out.println("\n============\n" + result.length + " Vorkommen" + 
-				(result.length > 0 ? ("\nlex. kleinste Pos. " + result[minIndex] + ", lex. groesste Pos. " + result[maxIndex]) : ""));
+		System.out.println("Muster 1: \t" + result.length + " Vorkommen" + 
+				(result.length > 0 ? ("\n\t\tlex. kleinste Pos. " + (result[minIndex]+1) + ", lex. groesste Pos. " + (1+result[maxIndex])) : "") + 
+				"\n\t\tZeit: " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
+		
+		//wir ein
+		time = System.nanoTime(); 
+		result = suff.search("wir ein$");
+		
+		
+		
+		maxIndex = -1;
+		minIndex = -1;
+		for (int i = 0; i < result.length; i ++) {
+			if (maxIndex  == -1 || result[maxIndex] < result[i]) {
+				maxIndex = i;
+			}
+			if (minIndex  == -1 || result[minIndex] > result[i]) {
+				minIndex = i;
+			}
+		}
+				
+		System.out.println("Muster 2: \t" + result.length + " Vorkommen" + 
+				(result.length > 0 ? ("\n\t\tlex. kleinste Pos. " + (result[minIndex]+1) + ", lex. groesste Pos. " + (1+result[maxIndex])) : "") + 
+				"\n\t\tZeit: " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
+		
+		//xx
+		time = System.nanoTime(); 
+		result = suff.search("xx$");
+		
+		
+		
+		maxIndex = -1;
+		minIndex = -1;
+		for (int i = 0; i < result.length; i ++) {
+			if (maxIndex  == -1 || result[maxIndex] < result[i]) {
+				maxIndex = i;
+			}
+			if (minIndex  == -1 || result[minIndex] > result[i]) {
+				minIndex = i;
+			}
+		}
+				
+		System.out.println("Muster 3: \t" + result.length + " Vorkommen" + 
+				(result.length > 0 ? ("\n\t\tlex. kleinste Pos. " + (result[minIndex]+1) + ", lex. groesste Pos. " + (1+result[maxIndex])) : "") + 
+				"\n\t\tZeit: " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
 	}
 }
 	
@@ -413,7 +407,7 @@ public class SuffixArray {
 				}
 				else {
 					l=m;
-				}
+				
 			}
 			result[1]=pos[l];
 			l= 0;

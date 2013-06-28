@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.NavigableMap;
-import java.util.TreeMap;
 
 public class SuffixArray {
 
@@ -20,18 +18,42 @@ public class SuffixArray {
 	public String text;
 	public int n;
 	public Map<String, Integer> bucket;
-	NavigableMap<Integer, String> posMap;
+	Map<Integer, String> posMap;
 
-	private void read() throws IOException {
+	private String read(String text_file) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(new File(
-				"text1.txt")));
+				text_file)));
 
+		StringBuilder text = new StringBuilder();
 		String line;
 		while ((line = reader.readLine()) != null) {
-			//system.out.println(line);
+			text.append(line);
+			text.append("\r");
 		}
 
 		reader.close();
+		return text.toString();
+	}
+	
+	private String[] readPattern(String pattern_file) throws IOException {
+		BufferedReader reader = new BufferedReader(new FileReader(new File(
+				pattern_file)));
+
+		String line;
+		StringBuilder pattern = new StringBuilder();
+		while ((line = reader.readLine()) != null) {
+			pattern.append(line);
+			if (!line.endsWith("$")) {
+				pattern.append("\r");
+			}
+		}
+		String[] p =  pattern.toString().split("\\$");
+		for (int i = 0; i < p.length; i++) {
+			p[i] = p[i] + "$";
+		}
+
+		reader.close();
+		return p;
 	}
 
 	private void suffix_array(String text, int n) {
@@ -45,7 +67,7 @@ public class SuffixArray {
 		bucketSize = new int[n + 1];
 
 		bucket = new HashMap<>(n + 1);
-		posMap = new TreeMap<Integer, String>();
+		posMap = new HashMap<Integer, String>(n + 1);
 
 		/*
 		 * for (char c = 32; c < 127; c++) { bucket.put(String.valueOf(c), -1);
@@ -201,6 +223,8 @@ public class SuffixArray {
 				pos[suf[i]] = i;
 				bucketStart[i] = bucketStart[i] || bucketStart2[i];
 			}
+			
+			
 			for (int i = 0; i < n; i++) {
 				posMap.put(i, text.substring(pos[i]));
 			}
@@ -304,83 +328,55 @@ public class SuffixArray {
 		
 	}
 			
-		
-	
+
 
 	public static void main(String[] args) throws IOException {
+		String text_file;
+		String pattern_file;
+		if(args.length != 2) {
+			text_file = "text2.txt";
+			pattern_file = "text2.pat";
+		} else {
+			text_file = args[0];
+			pattern_file = args[1];
+		}
+		
 		DecimalFormat df = new DecimalFormat("0.0#########");
 		
 		
-		String text = "Heute programmieren wir einen Algorithmus zur Suche in Texten.$";
-
 		SuffixArray suff = new SuffixArray();
+		String text = suff.read(text_file);
+		String[] patterns = suff.readPattern(pattern_file);
+		
 		
 		long time = System.nanoTime();
 		suff.suffix_array(text, text.length());
 		System.out.println("Suffix-Array: \tZeit " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
-		
-		//te
-		time = System.nanoTime(); 
-		int[] result = suff.search("te$");
-		
-		
-		
-		int maxIndex = -1;
-		int minIndex = -1;
-		for (int i = 0; i < result.length; i ++) {
-			if (maxIndex  == -1 || result[maxIndex] < result[i]) {
-				maxIndex = i;
+		int count = 0;
+		for (String pattern : patterns) {
+			count++;
+			
+			time = System.nanoTime(); 
+			int[] result = suff.search(pattern);
+			
+			System.out.println(pattern);
+			
+			int maxIndex = -1;
+			int minIndex = -1;
+			for (int i = 0; i < result.length; i ++) {
+				if (maxIndex  == -1 || result[maxIndex] < result[i]) {
+					maxIndex = i;
+				}
+				if (minIndex  == -1 || result[minIndex] > result[i]) {
+					minIndex = i;
+				}
 			}
-			if (minIndex  == -1 || result[minIndex] > result[i]) {
-				minIndex = i;
-			}
+					
+			System.out.println("Muster " + count + ": \t" + result.length + " Vorkommen" + 
+					(result.length > 0 ? ("\n\t\tlex. kleinste Pos. " + (result[minIndex]+1) + ", lex. groesste Pos. " + (1+result[maxIndex])) : "") + 
+					"\n\t\tZeit: " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
+			
 		}
-				
-		System.out.println("Muster 1: \t" + result.length + " Vorkommen" + 
-				(result.length > 0 ? ("\n\t\tlex. kleinste Pos. " + (result[minIndex]+1) + ", lex. groesste Pos. " + (1+result[maxIndex])) : "") + 
-				"\n\t\tZeit: " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
-		
-		//wir ein
-		time = System.nanoTime(); 
-		result = suff.search("wir ein$");
-		
-		
-		
-		maxIndex = -1;
-		minIndex = -1;
-		for (int i = 0; i < result.length; i ++) {
-			if (maxIndex  == -1 || result[maxIndex] < result[i]) {
-				maxIndex = i;
-			}
-			if (minIndex  == -1 || result[minIndex] > result[i]) {
-				minIndex = i;
-			}
-		}
-				
-		System.out.println("Muster 2: \t" + result.length + " Vorkommen" + 
-				(result.length > 0 ? ("\n\t\tlex. kleinste Pos. " + (result[minIndex]+1) + ", lex. groesste Pos. " + (1+result[maxIndex])) : "") + 
-				"\n\t\tZeit: " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
-		
-		//xx
-		time = System.nanoTime(); 
-		result = suff.search("xx$");
-		
-		
-		
-		maxIndex = -1;
-		minIndex = -1;
-		for (int i = 0; i < result.length; i ++) {
-			if (maxIndex  == -1 || result[maxIndex] < result[i]) {
-				maxIndex = i;
-			}
-			if (minIndex  == -1 || result[minIndex] > result[i]) {
-				minIndex = i;
-			}
-		}
-				
-		System.out.println("Muster 3: \t" + result.length + " Vorkommen" + 
-				(result.length > 0 ? ("\n\t\tlex. kleinste Pos. " + (result[minIndex]+1) + ", lex. groesste Pos. " + (1+result[maxIndex])) : "") + 
-				"\n\t\tZeit: " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
 	}
 }
 	

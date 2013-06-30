@@ -18,6 +18,7 @@ public class SuffixArray {
 	public String text;
 	public int n;
 	public Map<String, Integer> bucket;
+	public static DecimalFormat df = new DecimalFormat("0.0#########");
 	Map<Integer, String> posMap;
 
 	private String read(String text_file) throws IOException {
@@ -259,15 +260,18 @@ public class SuffixArray {
 	}
 
 
-	public int[] search(String y) {
-
+	public void search(String y, int count, long time) {
+		System.out.println("/////////////"+posMap.get(58));
+		System.out.println("/////////////"+posMap.get(66));
 		y=y.substring(0,y.length()-1);
-		
+		System.out.println(y);
+		System.out.println(y.compareTo("en"));
+		boolean appearance=true;
 		if (y.compareTo(posMap.get(n-1)) > 0) {
-			return new int[0];
+			appearance=false;
 		}
 		if (y.compareTo(posMap.get(0)) < 0) {
-			return new int[0];
+			appearance=false;
 		}
 		
 		int smallestIndex = -1;
@@ -279,25 +283,29 @@ public class SuffixArray {
 			int mid = (right + left) / 2;
 			
 			int compare = y.compareTo(posMap.get(mid));
-			
+			System.out.println("Mid: "+ posMap.get(mid));
 			if (compare == 0) {
 				left = mid;
+				System.out.println("Break;");
 				break;	
 			} else if (compare > 0) { 
 				// y > suff
 				left = mid + 1;
+				System.out.println("Left");
 			} else { 
 				// y < suff
 				right = mid;
+				System.out.println("Right");
 			}
 		}
-		
+
 		smallestIndex = left;
+		System.out.println("Smallest Index: "+posMap.get(smallestIndex));
 		
 		{
 			String suff = posMap.get(smallestIndex);
 			if (!(y.length() <= suff.length() && y.equals(suff.substring(0, y.length())))) {
-				return new int[0];
+				appearance =false;
 			}
 		}
 		
@@ -317,51 +325,83 @@ public class SuffixArray {
 		}
 		
 		biggestIndex = right;
+		System.out.println("Biggest Index: "+ posMap.get(biggestIndex));
 		
+		System.out.println("Muster " + count + ": \t" +  
+				(appearance ?((biggestIndex - smallestIndex + 1) + " Vorkommen")+ ("\n\t\tlex. kleinste Pos. " + (pos[smallestIndex]+1) + ", lex. groesste Pos. " + (1+pos[biggestIndex])) : ("0" + " Vorkommen")) + 
+				"\n\t\tZeit: " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
 		
-		int[] result = new int[biggestIndex - smallestIndex + 1];
+		/*int[] result = new int[biggestIndex - smallestIndex + 1];
 		for (int i = 0; i < result.length; i++) {
 			result[i] = pos[i + smallestIndex];
 		}
 		return result;
+		*/
 		
-		
+	}
+	
+	public boolean checkCorrectness() {
+		boolean result =false;
+		for (int i=0; i<posMap.size();i++) {
+			for (int j=i+1; j<posMap.size();j++) {
+				String y = posMap.get(i);
+				String x = posMap.get(j);
+				int ylength = y.length();
+				int xlength = x.length();
+				for (int k = 0; k < xlength && k < ylength && !result; k++) {
+					if (y.charAt(k) != x.charAt(k))
+						if (y.charAt(k) > x.charAt(k)) {
+							System.out.println("Indexes: "+ i+", "+j+" : "+y +" > "+x);
+							return false;
+						} else result= true;
+				}
+				result =false;
+				
+				
+
+			}
+			
+		}
+		return true;
 	}
 			
 
 
 	public static void main(String[] args) throws IOException {
+	
 		String text_file;
 		String pattern_file;
 		if(args.length != 2) {
-			text_file = "text2.txt";
-			pattern_file = "text2.pat";
+			text_file = "text1.txt";
+			pattern_file = "text1.pat";
 		} else {
 			text_file = args[0];
 			pattern_file = args[1];
 		}
 		
-		DecimalFormat df = new DecimalFormat("0.0#########");
+		
 		
 		
 		SuffixArray suff = new SuffixArray();
 		String text = suff.read(text_file);
 		String[] patterns = suff.readPattern(pattern_file);
 		
-		
+		text="azshdazshdh$";
 		long time = System.nanoTime();
 		suff.suffix_array(text, text.length());
-		System.out.println("Suffix-Array: \tZeit " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
+		System.out.println("Suffix_Array is "+ suff.checkCorrectness());
+		//System.out.println("Suffix-Array: \tZeit " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
 		int count = 0;
+		patterns[1]="a$";
 		for (String pattern : patterns) {
 			count++;
 			
 			time = System.nanoTime(); 
-			int[] result = suff.search(pattern);
+			suff.search(pattern, count, time);
 			
 			System.out.println(pattern);
 			
-			int maxIndex = -1;
+			/*int maxIndex = -1;
 			int minIndex = -1;
 			for (int i = 0; i < result.length; i ++) {
 				if (maxIndex  == -1 || result[maxIndex] < result[i]) {
@@ -369,13 +409,13 @@ public class SuffixArray {
 				}
 				if (minIndex  == -1 || result[minIndex] > result[i]) {
 					minIndex = i;
-				}
+				}	
 			}
-					
-			System.out.println("Muster " + count + ": \t" + result.length + " Vorkommen" + 
-					(result.length > 0 ? ("\n\t\tlex. kleinste Pos. " + (result[minIndex]+1) + ", lex. groesste Pos. " + (1+result[maxIndex])) : "") + 
+				*/	
+			/*System.out.println("Muster " + count + ": \t" + result.length + " Vorkommen" + 
+					(result.length > 0 ? ("\n\t\tlex. kleinste Pos. " + (result[0]+1) + ", lex. groesste Pos. " + (1+result[result.length-1])) : "") + 
 					"\n\t\tZeit: " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
-			
+			*/
 		}
 	}
 }

@@ -261,11 +261,11 @@ public class SuffixArray {
 
 
 	public void search(String y, int count, long time) {
-		System.out.println("/////////////"+posMap.get(58));
-		System.out.println("/////////////"+posMap.get(66));
+		//System.out.println("/////////////"+posMap.get(58));
+		//System.out.println("/////////////"+posMap.get(66));
 		y=y.substring(0,y.length()-1);
-		System.out.println(y);
-		System.out.println(y.compareTo("en"));
+		//System.out.println(y);
+		//System.out.println(y.compareTo("en"));
 		boolean appearance=true;
 		if (y.compareTo(posMap.get(n-1)) > 0) {
 			appearance=false;
@@ -283,19 +283,19 @@ public class SuffixArray {
 			int mid = (right + left) / 2;
 			
 			int compare = y.compareTo(posMap.get(mid));
-			System.out.println("Mid: "+ posMap.get(mid));
+			//System.out.println("Mid: "+ posMap.get(mid));
 			if (compare == 0) {
 				left = mid;
-				System.out.println("Break;");
+				//System.out.println("Break;");
 				break;	
 			} else if (compare > 0) { 
 				// y > suff
 				left = mid + 1;
-				System.out.println("Left");
+				//System.out.println("Left");
 			} else { 
 				// y < suff
 				right = mid;
-				System.out.println("Right");
+				//System.out.println("Right");
 			}
 		}
 
@@ -364,6 +364,36 @@ public class SuffixArray {
 		}
 		return true;
 	}
+	
+	public boolean correctSuffix_Array() {
+		boolean result =false;
+		for (int i=0; i<posMap.size();i++) {
+			for (int j=i+1; j<posMap.size();j++) {
+				String y = posMap.get(i);
+				String x = posMap.get(j);
+				int ylength = y.length();
+				int xlength = x.length();
+				for (int k = 0; k < xlength && k < ylength && !result; k++) {
+					if (y.charAt(k) != x.charAt(k))
+						if (y.charAt(k) > x.charAt(k)) {
+							String z= posMap.get(i);
+							posMap.put(i, posMap.get(j));
+							posMap.put(j, z);							
+							System.out.println("Indexes: "+ i+", "+j+" : "+y +" > "+x+ "changed");
+							
+							int z_number=pos[i];
+							pos[i]=pos[j];
+							pos[j]=z_number;
+							return false;
+						} else result= true;
+				}
+				result =false;
+				
+			}
+			
+		}
+		return true;
+	}
 			
 
 
@@ -386,13 +416,18 @@ public class SuffixArray {
 		String text = suff.read(text_file);
 		String[] patterns = suff.readPattern(pattern_file);
 		
-		text="azshdazshdh$";
+		//text="Heute programmieren wir einen Algorithmus zur Suche in grossen, seltsamen Tex$";// two strings in one
 		long time = System.nanoTime();
 		suff.suffix_array(text, text.length());
 		System.out.println("Suffix_Array is "+ suff.checkCorrectness());
 		//System.out.println("Suffix-Array: \tZeit " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
 		int count = 0;
-		patterns[1]="a$";
+		//patterns[1]="a$";
+		while (!suff.checkCorrectness()) {
+			suff.correctSuffix_Array();
+		}
+		System.out.println("Suffix_Array is "+ suff.checkCorrectness());
+		//System.exit(0);
 		for (String pattern : patterns) {
 			count++;
 			

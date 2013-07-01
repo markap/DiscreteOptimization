@@ -32,9 +32,11 @@ public class SuffixArray {
 	
 	};
 	 
-	private void suffixSort(int n){//initial sorting of the suffixes, n is the length of the text
-		suf = new Integer[n];
-		pos = new Integer[n];
+	
+	//initial sorting of the suffixes, n is the length of the text
+	private void suffixSort(int n){
+		suf = new Integer[n]; //suffix-array
+		pos = new Integer[n]; //position array
 		bucketSize = new int[n];
 		next = new int[n];
 		bucketStart = new boolean[n+1];
@@ -100,7 +102,7 @@ public class SuffixArray {
 	        }
 	      }
 	    }
-	    for (int i=0; i<n; ++i){
+	    for (int i=0; i<n; ++i){ // suf array is the invertion of position array
 	      pos[suf[i]] = i;
 	      bucketStart[i] |= bucketStart2[i];
 	    }
@@ -159,8 +161,12 @@ public class SuffixArray {
 	}
 		
 	
-	
-	private void search(String y, int count, long time) {//binary search to find number of appearances, lexicographically smallest appearance and greatest appearance
+	//binary search to find number of appearances, lexicographically smallest appearance and greatest appearance
+	// Parameters:
+	//		y: String we are searching for
+	//		count: number of pattern
+	//		time: time having passed before starting the search
+	private void search(String y, int count, long time) {
 
 		y=y.substring(0,y.length()-1); // delete $ in the end of string
 		//System.out.println(y);

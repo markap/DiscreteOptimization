@@ -251,7 +251,7 @@ public class SuffixArray {
 		
 	}
 	
-	private String[] readPattern(String pattern_file) throws IOException {
+	private String[] readPattern(String pattern_file) throws IOException { // read pattern file
 		BufferedReader reader = new BufferedReader(new FileReader(new File(
 				pattern_file)));
 

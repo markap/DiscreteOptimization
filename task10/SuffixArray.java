@@ -28,27 +28,29 @@ public class SuffixArray {
 	
 	};
 	 
-	void suffixSort(int n){
+	private void suffixSort(int n){
 		suf = new Integer[n];
 		pos = new Integer[n];
 		bucketSize = new int[n];
 		next = new int[n];
 		bucketStart = new boolean[n+1];
 		bucketStart2 = new boolean[n+1];
-	  //sort suffixes according to their first characters
-	  for (int i=0; i<n; ++i){
-	    pos[i] = i;
-	  }
-	 
-	  Arrays.sort(pos, new Comparator<Integer>() {
-
+		
+		
+		for (int i=0; i<n; ++i){
+		    pos[i] = i;
+		}
+		 
+		//sort pos according to their first characters
+		Arrays.sort(pos, new Comparator<Integer>() {
+	
 			@Override
 			public int compare(Integer a, Integer b) {
 				// TODO Auto-generated method stub
 				return text.charAt(a) - text.charAt(b);
-		
+			
 			}
-		
+			
 		});
 	 
 	 
@@ -67,7 +69,7 @@ public class SuffixArray {
 	      buckets++;
 	    }
 	    if (buckets == n) break; // We are done! 
-	    //{suffixes are separted in buckets containing strings starting with the same h characters}
+	    //suffixes are separted in buckets containing strings starting with the same h characters}
 	 
 	    for (int i = 0; i < n; i = next[i]){
 	      bucketSize[i] = 0;
@@ -127,7 +129,7 @@ public class SuffixArray {
 		return text.toString();
 	}
 	
-	public boolean checkCorrectness(int n) {
+	private boolean checkCorrectness(int n) {
 		boolean result =false;
 		for (int i=0; i<n;i++) {
 			for (int j=i+1; j<n;j++) {
@@ -154,7 +156,7 @@ public class SuffixArray {
 		
 	
 	
-	public void search(String y, int count, long time) {
+	private void search(String y, int count, long time) {
 
 		y=y.substring(0,y.length()-1);
 		//System.out.println(y);
@@ -222,17 +224,23 @@ public class SuffixArray {
 		//System.out.println(appearance);
 		
 		if (appearance == false) {
-			System.out.println("kommt nicht vor");
+			//System.out.println("kommt nicht vor");
 		} else if (text.substring(pos[smallestIndex]).startsWith(y.substring(0, y.length()-1)) && text.substring(pos[biggestIndex]).startsWith(y.substring(0, y.length()-1))) {
 	
-			System.out.println("passt");
+			//System.out.println("passt");
 		} else {
 			System.out.println("passt nicht");
 			System.exit(1);
 		}
+		if (appearance) {
+			//System.out.println(y);
+			//System.out.println(text.substring(pos[smallestIndex]));
+			//System.out.println(text.substring(pos[biggestIndex]));
+		}
+		
 		
 		System.out.println("Muster " + count + ": " +  
-				(appearance ?((biggestIndex - smallestIndex + 1) + " Vorkommen")+ (", lex. kleinste Pos. " + (pos[smallestIndex]) + ", lex. groesste Pos. " + (pos[biggestIndex])) : ("0" + " Vorkommen")) + 
+				(appearance ?((biggestIndex - smallestIndex + 1) + " Vorkommen")+ (", lex. kleinste Pos. " + (pos[smallestIndex] +1) + ", lex. groesste Pos. " + (pos[biggestIndex]+1)) : ("0" + " Vorkommen")) + 
 				", Zeit: " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
 		
 		
@@ -266,16 +274,26 @@ public class SuffixArray {
 	 */
 	public static void main(String[] args) throws IOException {
 		
-		// TODO Auto-generated method stub
+		String text_file;
+		String pattern_file;
+		if(args.length != 2) {
+			text_file = "text1.txt";
+			pattern_file = "text1.pat";
+		} else {
+			text_file = args[0];
+			pattern_file = args[1];
+		}
+		
+		
 		SuffixArray arr = new SuffixArray();
-		text = arr.read("text1.txt");
+		text = arr.read(text_file);
 		//text = "hdbhaabdbabab\rb" +"abdh$";
 		
 		long time = System.nanoTime();
 		arr.suffixSort(text.length());
 		System.out.println("Suffix-Array: \tZeit " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
 		
-		String[] pattern = arr.readPattern("text1.pat");
+		String[] pattern = arr.readPattern(pattern_file);
 	
 		int i = 0;
 		for (String p : pattern) {

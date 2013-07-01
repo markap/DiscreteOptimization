@@ -8,11 +8,15 @@ import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Comparator;
 
+
+// Algorithm to find string in text
+// Building suffix array in O(n log n) time (n is length of text)
+// Search algorithm runs in O(m log n) time (m is length of string y it is being searched for)
 public class SuffixArray {
 	public static DecimalFormat df = new DecimalFormat("0.0#########");
 	static String text;
 	
-	Integer[] suf, pos; //output
+	Integer[] suf, pos; //output, suffix and position array
 	int[] bucketSize, next; //internal
 	boolean[] bucketStart, bucketStart2;
 	 
@@ -20,7 +24,7 @@ public class SuffixArray {
     = new Comparator<Integer>() {
 
 		@Override
-		public int compare(Integer a, Integer b) {
+		public int compare(Integer a, Integer b) {//compare characters at position a and b
 			// TODO Auto-generated method stub
 			return text.charAt(a) - text.charAt(b);
 	
@@ -28,7 +32,7 @@ public class SuffixArray {
 	
 	};
 	 
-	private void suffixSort(int n){
+	private void suffixSort(int n){//initial sorting of the suffixes, n is the length of the text
 		suf = new Integer[n];
 		pos = new Integer[n];
 		bucketSize = new int[n];
@@ -41,12 +45,12 @@ public class SuffixArray {
 		    pos[i] = i;
 		}
 		 
-		//sort pos according to their first characters
+		//sort pos according to first characters of suffixes
 		Arrays.sort(pos, new Comparator<Integer>() {
 	
 			@Override
-			public int compare(Integer a, Integer b) {
-				// TODO Auto-generated method stub
+			public int compare(Integer a, Integer b) {//compare characters at position a and b
+				
 				return text.charAt(a) - text.charAt(b);
 			
 			}
@@ -58,7 +62,7 @@ public class SuffixArray {
 	    bucketStart[i] = i == 0 || text.charAt(pos[i]) != text.charAt(pos[i-1]);
 	    bucketStart2[i] = false;
 	  }
-	 
+	 //Recursive bucket sort phase
 	  for (int h = 1; h < n; h <<= 1){
 	    
 	    int buckets = 0;
@@ -69,7 +73,7 @@ public class SuffixArray {
 	      buckets++;
 	    }
 	    if (buckets == n) break; // We are done! 
-	    //suffixes are separted in buckets containing strings starting with the same h characters}
+	    //suffixes are separated in buckets containing strings starting with the same h characters}
 	 
 	    for (int i = 0; i < n; i = next[i]){
 	      bucketSize[i] = 0;
@@ -114,7 +118,7 @@ public class SuffixArray {
 	}
 	
 	
-	private String read(String text_file) throws IOException {
+	private String read(String text_file) throws IOException { // reading from text file
 		BufferedReader reader = new BufferedReader(new FileReader(new File(
 				text_file)));
 
@@ -129,7 +133,7 @@ public class SuffixArray {
 		return text.toString();
 	}
 	
-	private boolean checkCorrectness(int n) {
+	private boolean checkCorrectness(int n) { //checking correctness of position array after initial sorting
 		boolean result =false;
 		for (int i=0; i<n;i++) {
 			for (int j=i+1; j<n;j++) {
@@ -156,17 +160,17 @@ public class SuffixArray {
 		
 	
 	
-	private void search(String y, int count, long time) {
+	private void search(String y, int count, long time) {//binary search to find number of appearances, lexicographically smallest appearance and greatest appearance
 
-		y=y.substring(0,y.length()-1);
+		y=y.substring(0,y.length()-1); // delete $ in the end of string
 		//System.out.println(y);
 		
-		boolean appearance=true;
+		boolean appearance=true;// by default appearance is true
 		if (y.compareTo(text.substring(pos[text.length() - 1])) > 0) {
-			appearance=false;
+			appearance=false;// text does not contain y
 		}
 		if (y.compareTo(text.substring(pos[0])) < 0) {
-			appearance=false;
+			appearance=false;// text does not contain y
 		}
 		
 		int smallestIndex = -1;
@@ -174,7 +178,7 @@ public class SuffixArray {
 		int left = 0;
 		int right = text.length() - 1;
 		
-		while (left != right) {
+		while (left != right) {//search for appearance with smallest index
 			int mid = (right + left) / 2;
 			
 			int compare = y.compareTo(text.substring(pos[mid]));
@@ -200,14 +204,14 @@ public class SuffixArray {
 		{
 			String suff = text.substring(pos[smallestIndex]);
 			if (!(y.length() <= suff.length() && y.equals(suff.substring(0, y.length())))) {
-				appearance =false;
+				appearance =false; // text does not contain y
 			}
 		}
 		
 		
 		right = text.length() - 1;
 		
-		while(left != right) {
+		while(left != right) {//find the appearance with greatest index
 			int mid = (int) Math.ceil((double)(right + left) / 2.0d);
 
 			String suff = text.substring(pos[mid]);
@@ -238,7 +242,7 @@ public class SuffixArray {
 			//System.out.println(text.substring(pos[biggestIndex]));
 		}
 		
-		
+		//Output after binary search
 		System.out.println("Muster " + count + ": " +  
 				(appearance ?((biggestIndex - smallestIndex + 1) + " Vorkommen")+ (", lex. kleinste Pos. " + (pos[smallestIndex] +1) + ", lex. groesste Pos. " + (pos[biggestIndex]+1)) : ("0" + " Vorkommen")) + 
 				", Zeit: " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
@@ -276,9 +280,9 @@ public class SuffixArray {
 		
 		String text_file;
 		String pattern_file;
-		if(args.length != 2) {
-			text_file = "text1.txt";
-			pattern_file = "text1.pat";
+		if(args.length != 2) {// if no file to open is entered in the command line
+			text_file = "text6.txt";
+			pattern_file = "text6.pat";
 		} else {
 			text_file = args[0];
 			pattern_file = args[1];
@@ -289,7 +293,7 @@ public class SuffixArray {
 		text = arr.read(text_file);
 		//text = "hdbhaabdbabab\rb" +"abdh$";
 		
-		long time = System.nanoTime();
+		long time = System.nanoTime();// time with nano seconds accuracy
 		arr.suffixSort(text.length());
 		System.out.println("Suffix-Array: \tZeit " + df.format(0.000000001d * (System.nanoTime() - time)) + " Sekunden");
 		
